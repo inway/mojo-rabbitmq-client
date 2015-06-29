@@ -3,7 +3,7 @@ use inc::Module::Install;
 name 'Mojo-RabbitMQ-Client';
 all_from 'lib/Mojo/RabbitMQ/Client.pm';
 
-requires 'Mojolicous' => '6.10'; # We require next_tick from Reactor
+requires 'Mojolicious' => '6.10'; # We require next_tick from Reactor
 requires 'Net::AMQP';
 
 tests 't/*.t';
