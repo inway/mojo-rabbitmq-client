@@ -94,6 +94,22 @@ sub close {
   );
 }
 
+sub start {
+  $_[0]->_loop->start unless $_[0]->_loop->is_running;
+}
+
+sub stop {
+  $_[0]->_loop->stop if $_[0]->_loop->is_running;
+}
+
+sub timer {
+  shift->_loop->timer(@_);
+}
+
+sub recurring {
+  shift->_loop->recurring(@_);
+}
+
 sub _loop { $_[0]->ioloop }
 
 sub _error {
@@ -415,7 +431,7 @@ sub _write {
   my $id    = shift @_;
   my $frame = shift @_;
 
-  $self->_loop->stream($id)->write($frame);
+  $self->_loop->stream($id)->write($frame) if defined $self->_loop->stream($id);
 }
 
 1;
