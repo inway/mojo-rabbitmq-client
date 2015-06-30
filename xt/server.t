@@ -46,8 +46,7 @@ $amqp->on(
 
             my $queue = $channel->declare_queue(
               queue       => 'test_queue',
-              auto_delete => 0,
-              durable     => 1,
+              auto_delete => 1,
             );
             $queue->catch(
               sub {
