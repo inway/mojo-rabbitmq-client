@@ -1,0 +1,13 @@
+language: perl
+perl:
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+services:
+  - rabbitmq
+env:
+  - "HARNESS_OPTIONS=j9 TEST_POD=1"
+install:
+  - "cpanm -n Test::Pod"
+  - "cpanm -n --installdeps ."
