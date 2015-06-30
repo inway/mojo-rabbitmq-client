@@ -4,10 +4,6 @@ perl:
   - "5.18"
   - "5.16"
   - "5.14"
-  - blead
-matrix:
-  allow_failures:
-    - perl: blead
 services:
   - rabbitmq
 env:
