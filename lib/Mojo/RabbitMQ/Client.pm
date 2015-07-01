@@ -18,16 +18,18 @@ our $VERSION = "0.0.1";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
-has is_open            => 0;
-has url                => undef;
-has connect_timeout    => sub { $ENV{MOJO_CONNECT_TIMEOUT} // 10 };
-has heartbeat_interval => 60;
-has ioloop => sub { Mojo::IOLoop->singleton };
+has is_open           => 0;
+has url               => undef;
+has connect_timeout   => sub { $ENV{MOJO_CONNECT_TIMEOUT} // 10 };
+has heartbeat_timeout => 60;
+has heartbeat_received => 0;    # When did we receive last heartbeat
+has heartbeat_sent     => 0;    # When did we sent last heartbeat
+has ioloop          => sub { Mojo::IOLoop->singleton };
 has max_buffer_size => 16384;
-has queue           => sub { Mojo::RabbitMQ::LocalQueue->new };
-has channels        => sub { {} };
-has stream_id       => undef;
-has login_user      => '';
+has queue    => sub { Mojo::RabbitMQ::LocalQueue->new };
+has channels => sub { {} };
+has stream_id  => undef;
+has login_user => '';
 
 sub connect {
   my $self = shift;
@@ -173,7 +175,7 @@ sub _parse_frames {
   my ($frame) = Net::AMQP->parse_raw_frames(\$stack);
 
   if ($frame->isa('Net::AMQP::Frame::Heartbeat')) {
-    $self->_write_frame(Net::AMQP::Frame::Heartbeat->new());
+    $self->heartbeat_received(time());
   }
   elsif ($frame->isa('Net::AMQP::Frame::Method')
     and $frame->method_frame->isa('Net::AMQP::Protocol::Connection::Close'))
@@ -321,7 +323,7 @@ sub _tune {
       my $method_frame = $frame->method_frame;
       $self->max_buffer_size($method_frame->frame_max);
 
-      my $heartbeat = $self->heartbeat_interval || $method_frame->heartbeat;
+      my $heartbeat = $self->heartbeat_timeout || $method_frame->heartbeat;
 
       # Confirm
       $self->_write_frame(
@@ -331,6 +333,20 @@ sub _tune {
           heartbeat   => $heartbeat,
         ),
       );
+
+ # According to https://www.rabbitmq.com/amqp-0-9-1-errata.html
+ # The client should start sending heartbeats after receiving a Connection.Tune
+ # method, and start monitoring heartbeats after sending Connection.Open.
+ # -and-
+ # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
+ # heartbeats, the peer is considered to be unreachable.
+      $self->_loop->recurring(
+        $heartbeat / 2 => sub {
+          return unless time() - $self->heartbeat_sent > $heartbeat / 2;
+          $self->_write_frame(Net::AMQP::Frame::Heartbeat->new());
+          $self->heartbeat_sent(time());
+        }
+      ) if $heartbeat;
 
       $self->_write_expect(
         'Connection::Open' =>
