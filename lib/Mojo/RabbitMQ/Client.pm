@@ -515,6 +515,102 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
 =head1 DESCRIPTION
 
+=head1 EVENTS
+
+L<Mojo::RabbitMQ::Client> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head2 connect
+
+  $client->on(connect => sub {
+    my ($client, $stream) = @_;
+    ...
+  });
+
+Emitted when TCP/IP connection with RabbitMQ server is established.
+
+=head2 open
+
+  $client->on(open => sub {
+    my ($client) = @_;
+    ...
+  });
+
+Emitted AMQP protocol Connection.Open-Ok method is received.
+
+=head2 close
+
+  $client->on(close => sub {
+    my ($client) = @_;
+    ...
+  });
+
+Emitted on reception of Connection.Close-Ok method.
+
+=head2 disconnect
+
+  $client->on(close => sub {
+    my ($client) = @_;
+    ...
+  });
+
+Emitted when TCP/IP connection gets disconnected.
+
+=head1 ATTRIBUTES
+
+L<Mojo::RabbitMQ::Client> has following attributes.
+
+=head2 url
+
+  my $url = $client->url;
+  $client->url('rabbitmq://...');
+
+=head2 heartbeat_timeout
+
+  my $timeout = $client->heartbeat_timeout;
+  $client->heartbeat_timeout(180);
+
+=head1 METHODS
+
+L<Mojo::RabbitMQ::Client> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
+
+=head2 connect
+
+  $client->connect();
+
+Tries to connect to RabbitMQ server and negotiate AMQP protocol.
+
+=head2 close
+
+  $client->close();
+
+=head2 open_channel
+
+  my $channel = Mojo::RabbitMQ::Channel->new();
+  ...
+  $client->open_channel($channel);
+
+=head2 delete_channel
+
+  my $removed = $client->delete_channel($channel->id);
+
+=head2 start
+
+  $client->start();
+
+=head2 stop
+
+  $client->stop();
+
+=head2 timer
+
+  $client->timer(10 => sub { ... });
+
+=head2 recurring
+
+  $client->recurring(5 => sub { ... });
+
 =head1 SEE ALSO
 
 L<Mojo::RabbitMQ::Channel>
