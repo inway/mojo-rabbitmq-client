@@ -447,7 +447,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   use Mojo::RabbitMQ::Client;
   
-  my $clinet = Mojo::RabbitMQ::Client->new(
+  my $client = Mojo::RabbitMQ::Client->new(
     url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
 
   # Catch all client related errors
@@ -456,7 +456,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
   # When connection is in Open state, open new channel
   $client->on(
     open => sub {
-      my ($self) = @_;
+      my ($client) = @_;
       
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Channel->new();
@@ -487,7 +487,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       );
       $channel->on(close => sub { $log->error('Channel closed') });
 
-      $self->open_channel($channel);
+      $client->open_channel($channel);
     }
   );
   
