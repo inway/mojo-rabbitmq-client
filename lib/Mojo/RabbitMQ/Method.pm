@@ -62,6 +62,8 @@ Mojo::RabbitMQ::Method - it's a generic class for all AMQP method calls
 
 =head1 DESCRIPTION
 
+L<Mojo::RabbitMQ::Method> is general class for every AMQP method call.
+
 =head1 EVENTS
 
 L<Mojo::RabbitMQ::Method> inherits all events from L<Mojo::EventEmitter> and can emit the
@@ -75,6 +77,14 @@ following new ones.
   });
 
 Emitted when one of expected replies is received.
+
+=head2 message
+
+Can be emmited by consumption & get methods.
+
+=head2 empty
+
+Can be emmited by get method, when no messages are available on queue.
 
 =head1 ATTRIBUTES
 
@@ -125,7 +135,7 @@ Sets AMQP method name, its arguments and expected replies.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Channel>
+L<Mojo::RabbitMQ::Channel>, L<Mojo::RabbitMQ::Client>
 
 =head1 COPYRIGHT AND LICENSE
 
