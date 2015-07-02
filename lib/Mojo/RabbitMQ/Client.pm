@@ -70,7 +70,7 @@ sub open_channel {
 
   $self->channels->{$id} = $channel->id($id)->client($self);
 
-  $channel->open;
+  $channel->_open;
 
   return $self;
 }

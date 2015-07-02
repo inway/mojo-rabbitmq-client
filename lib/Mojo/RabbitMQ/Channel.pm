@@ -14,7 +14,7 @@ has content_queue => sub { Mojo::RabbitMQ::LocalQueue->new };
 has consumer_cbs  => sub { {} };
 has return_cbs    => sub { {} };
 
-sub open {
+sub _open {
   my $self = shift;
 
   if ($self->is_open) {
