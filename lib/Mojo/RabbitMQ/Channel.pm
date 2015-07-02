@@ -478,3 +478,141 @@ sub DESTROY {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Mojo::RabbitMQ::Channel - handles all channel related methods
+
+=head1 SYNOPSIS
+
+  use Mojo::RabbitMQ::Channel;
+  
+  my $channel = Mojo::RabbitMQ::Channel->new();
+
+  $channel->catch(sub { warn "Some channel error occured: " . $_[1] });
+
+  $channel->on(
+    open => sub {
+      my ($channel) = @_;
+      ...
+    }
+  );
+  $channel->on(close => sub { warn "Channel closed" });
+  
+  $client->open_channel($channel);
+
+=head1 DESCRIPTION
+
+L<Mojo::RabbitMQ::Channel> allows to call all channel related methods.
+
+=head1 EVENTS
+
+L<Mojo::RabbitMQ::Channel> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head2 open
+
+  $channel->on(open => sub {
+    my ($channel) = @_;
+    ...
+  });
+
+Emitted when channel receives Open-Ok.
+
+=head2 close
+
+  $channel->on(close=> sub {
+    my ($channel, $frame) = @_;
+    ...
+  });
+
+Emitted when channel gets closed, C<<$frame>> contains close reason.
+
+=head1 ATTRIBUTES
+
+L<Mojo::RabbitMQ::Channel> has following attributes.
+
+=head2 id
+
+  my $id = $channel->id;
+  $channel->id(20810);
+
+If not set, L<Mojo::RabbitMQ::Client> sets it to next free number when channel is opened.
+
+=head2 is_open
+
+  $channel->is_open ? "Channel is open" : "Channel is closed";
+
+=head2 is_active
+
+  $channel->is_active ? "Channel is active" : "Channel is not active";
+
+This can be modified on reception of Channel-Flow.
+
+=head2 client
+
+  my $client = $channel->client;
+  $channel->client($client);
+
+=head1 METHODS
+
+L<Mojo::RabbitMQ::Channel> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
+
+=head2 close
+
+  $channel->close;
+
+Cancels all consumptions and closes channel afterwards.
+
+=head2 declare_exchange
+
+=head2 delete_exchange
+
+=head2 declare_queue
+
+=head2 bind_queue
+
+=head2 unbind_queue
+
+=head2 purge_queue
+
+=head2 delete_queue
+
+=head2 publish
+
+=head2 consume
+
+=head2 cancel
+
+=head2 get
+
+=head2 ack
+
+=head2 qos
+
+=head2 recover
+
+=head2 reject
+
+=head2 select_tx
+
+=head2 commit_tx
+
+=head2 rollback_tx
+
+=head1 SEE ALSO
+
+L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Method>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2015, Sebastian Podjasek
+
+Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
+
+This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
+
+=cut
