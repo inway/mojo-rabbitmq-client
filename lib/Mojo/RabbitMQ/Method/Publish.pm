@@ -118,7 +118,7 @@ Mojo::RabbitMQ::Method::Publish - single class to do all of AMQP Publish method 
 
 =head1 EVENTS
 
-L<Mojo::RabbitMQ::Method::Publish> inherits all events from L<Mojo::EventEmitter>.
+L<Mojo::RabbitMQ::Method::Publish> inherits all events from L<Mojo::RabbitMQ::Method>.
 
 =head1 ATTRIBUTES
 
