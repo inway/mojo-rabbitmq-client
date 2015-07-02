@@ -116,6 +116,8 @@ Mojo::RabbitMQ::Method::Publish - single class to do all of AMQP Publish method 
   
 =head1 DESCRIPTION
 
+L<Mojo::RabbitMQ::Method::Publish> is a special class to implement AMQP message publish workflow.
+
 =head1 EVENTS
 
 L<Mojo::RabbitMQ::Method::Publish> inherits all events from L<Mojo::RabbitMQ::Method>.
@@ -185,7 +187,7 @@ Only accepts common arguments for message publish chain. Which is:
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Method>
+L<Mojo::RabbitMQ::Method>, L<Mojo::RabbitMQ::Channel>, L<Mojo::RabbitMQ::Client>
 
 =head1 COPYRIGHT AND LICENSE
 
