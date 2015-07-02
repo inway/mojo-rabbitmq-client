@@ -33,3 +33,106 @@ sub deliver {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Mojo::RabbitMQ::Method - it's a generic class for all AMQP method calls
+
+=head1 SYNOPSIS
+
+  use Mojo::RabbitMQ::Method;
+  
+  my $method = Mojo::RabbitMQ::Method->new(
+    client => $client,
+    channel => $channel
+  )->setup(
+    'Basic::Consume' => {
+      ...
+    },
+    ['Basic::ConsumeOk', ...]
+  );
+  
+  # Watch for errors
+  $method->on(error => sub { warn "Error in reception: " . $_[1] });
+  
+  # Send this frame to AMQP
+  $method->deliver;
+
+=head1 DESCRIPTION
+
+=head1 EVENTS
+
+L<Mojo::RabbitMQ::Method> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head2 success
+
+  $method->on(success => sub {
+    my ($method, $frame) = @_;
+    ...
+  });
+
+Emitted when one of expected replies is received.
+
+=head1 ATTRIBUTES
+
+L<Mojo::RabbitMQ::Method> has following attributes.
+
+=head2 is_sent
+
+  $method->is_sent ? "Method was sent" : "Method is still pending delivery";
+
+=head2 client
+
+  my $client = $method->client;
+  $method->client($client);
+
+=head2 name
+
+  my $name = $method->name;
+  $method->name('Basic::Get');
+
+=head2 arguments
+
+  my $arguments = $method->arguments;
+  $method->arguments({no_ack => 1, ticket => 0, queue => 'amq.queue'});
+
+=head2 expect
+
+  my $expectations = $method->expect;
+  $method->expect([qw(Basic::GetOk Basic::GetEmpty)]);
+
+=head1 METHODS
+
+L<Mojo::RabbitMQ::Method> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
+
+=head2 setup
+
+  $method = $method->setup($name, $arguments, $expectations);
+
+Sets AMQP method name, its arguments and expected replies.
+
+=head2 deliver
+
+  my $status = $method->deliver();
+  
+  This delivers AMQP method call to server. Returns C<<false>> when channel is not open, C<<true>> otherwise.
+  On successful delivery->reply cycle emits C<<success>> event.
+  C<<error>> is emitted when none of expected replies are received.
+
+=head1 SEE ALSO
+
+L<Mojo::RabbitMQ::Channel>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2015, Sebastian Podjasek
+
+Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
+
+This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
+
+=cut
