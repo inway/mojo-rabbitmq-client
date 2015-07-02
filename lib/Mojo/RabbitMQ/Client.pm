@@ -515,6 +515,8 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
 =head1 DESCRIPTION
 
+L<Mojo::RabbitMQ::Client> is a rewrite of L<AnyEvent::RabbitMQ> to work on top of L<Mojo::IOLoop>.
+
 =head1 EVENTS
 
 L<Mojo::RabbitMQ::Client> inherits all events from L<Mojo::EventEmitter> and can emit the
