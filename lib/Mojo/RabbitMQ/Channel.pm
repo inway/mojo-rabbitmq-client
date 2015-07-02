@@ -39,7 +39,7 @@ sub open {
   return $self;
 }
 
-sub push_queue_or_consume {
+sub _push_queue_or_consume {
   my $self = shift;
   my ($frame) = @_;
 

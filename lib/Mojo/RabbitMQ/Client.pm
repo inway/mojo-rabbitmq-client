@@ -192,7 +192,7 @@ sub _parse_frames {
   else {
     my $channel = $self->channels->{$frame->channel};
     if (defined $channel) {
-      $channel->push_queue_or_consume($frame);
+      $channel->_push_queue_or_consume($frame);
     }
     else {
       $self->emit(
