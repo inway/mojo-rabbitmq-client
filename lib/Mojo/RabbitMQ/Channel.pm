@@ -901,9 +901,11 @@ same consumer tags. If this field is empty the server will generate a unique tag
     my $consumer_tag = $frame->method_frame->consumer_tag;
   });
 
-=item no_local
+=item no_local (not implemented in RabbitMQ!)
 
 If the no-local field is set the server will not send messages to the connection that published them.
+
+See L<RabbitMQ Compatibility and Conformance|https://www.rabbitmq.com/specification.html>
  
 =item no_ack
 
