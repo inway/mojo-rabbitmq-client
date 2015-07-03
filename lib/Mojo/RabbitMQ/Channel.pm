@@ -355,7 +355,7 @@ sub get {
       $self->_push_read_header_and_body(
         'ok', $frame,
         sub {
-          $this->emit(message => @_);
+          $this->emit(message => $frame, @_);
         },
         sub {
           $this->emit(error => 'Failed to get messages from queue');
