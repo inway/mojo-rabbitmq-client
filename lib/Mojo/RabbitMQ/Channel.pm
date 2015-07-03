@@ -869,6 +869,8 @@ As said above, all rejections are emitted as C<reject> event.
 
   $message->on(reject => sub { ... });
 
+=back
+
 =head2 consume
 
   my $consumer = $channel->consume(queue => 'mq');
