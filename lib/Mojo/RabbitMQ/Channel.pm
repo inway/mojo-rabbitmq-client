@@ -903,7 +903,14 @@ same consumer tags. If this field is empty the server will generate a unique tag
 
 =item no_local
 
+If the no-local field is set the server will not send messages to the connection that published them.
+ 
 =item no_ack
+
+If this field is set the server does not expect acknowledgements for messages. That is, when a message
+is delivered to the client the server assumes the delivery will succeed and immediately dequeues it.
+This functionality may increase performance but at the cost of reliability. Messages can get lost if
+a client dies before they are delivered to the application. 
 
 =item exclusive
 
@@ -983,6 +990,11 @@ Following arguments are accepted:
 Specifies the name of the queue to get a message from.
 
 =item no_ack
+
+If this field is set the server does not expect acknowledgements for messages. That is, when a message
+is delivered to the client the server assumes the delivery will succeed and immediately dequeues it.
+This functionality may increase performance but at the cost of reliability. Messages can get lost if
+a client dies before they are delivered to the application. 
 
 =back
 
