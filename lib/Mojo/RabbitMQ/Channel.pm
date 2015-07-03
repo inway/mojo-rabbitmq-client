@@ -576,9 +576,13 @@ Cancels all consumers and closes channel afterwards.
     ...
   )->deliver;
 
-This method creates an exchange if it does not exists. If it exists it verifies
-that it settings are correct, if not - channel is closed with appropriate message.
-  
+Verify exchange exists, create if needed.
+
+This method creates an exchange if it does not already exist, and if the
+exchange exists, verifies that it is of the correct and expected class.
+
+Following arguments are accepted:
+
 =over 2
 
 =item exchange
@@ -587,25 +591,33 @@ Unique exchange name
 
 =item type
 
-Type is one of AMQP server implemented types, for example: fanout, direct, topic, headers.
+Each exchange belongs to one of a set of exchange types implemented by the server. The
+exchange types define the functionality of the exchange - i.e. how messages are routed
+through it. It is not valid or meaningful to attempt to change the type of an existing
+exchange. 
 
 =item passive
 
-If set server will not create the exchange. This can be used to check exchange existence
-without creating it.
+If set, the server will reply with Declare-Ok if the exchange already exists with the same
+name, and raise an error if not. The client can use this to check whether an exchange
+exists without modifying the server state. When set, all other method fields except name
+and no-wait are ignored. A declare with both passive and no-wait has no effect. Arguments
+are compared for semantic equivalence. 
 
 =item durable
 
-Mark exchange as durable, which means that it will remain active upon server restart.
-Non-durable exchanges will be purged on server restart.
+If set when creating a new exchange, the exchange will be marked as durable. Durable exchanges
+remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged
+if/when a server restarts. 
 
 =item auto_delete
 
-If set, the exchange will be deleted when no queue is using it.
+If set, the exchange is deleted when all queues have finished using it.
 
 =item internal
 
-Internal exchanges may not be used directly by publishers, but can be bound to other exchanges.
+If set, the exchange may not be used directly by publishers, but only when bound to other exchanges.
+Internal exchanges are used to construct wiring that is not visible to applications. 
 
 =back
 
@@ -613,7 +625,12 @@ Internal exchanges may not be used directly by publishers, but can be bound to o
 
   $channel->delete_exchange(exchange => 'mojo')->deliver;
   
-Deletes an exchange. When an exchange is deleted all queue bindings on that exchange are cancelled.
+Delete an exchange.
+
+This method deletes an exchange. When an exchange is deleted all queue bindings on the exchange
+are cancelled.
+
+Following arguments are accepted:
 
 =over 2
 
@@ -623,13 +640,59 @@ Exchange name.
 
 =item if_unused
 
-Deletes only if unused. If exchange still has queue bindings server will raise a channel exception.
+If set, the server will only delete the exchange if it has no queue bindings. If the exchange has
+queue bindings the server does not delete it but raises a channel exception instead. 
 
 =back
 
 =head2 declare_queue
 
   my $queue = $channel->declare_queue(queue => 'mq', durable => 1)->deliver
+
+Declare queue, create if needed.
+
+This method creates or checks a queue. When creating a new queue the client can
+specify various properties that control the durability of the queue and its contents,
+and the level of sharing for the queue.
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+The queue name MAY be empty, in which case the server MUST create a new queue with
+a unique generated name and return this to the client in the Declare-Ok method.
+
+=item passive
+
+If set, the server will reply with Declare-Ok if the queue already exists with the same
+name, and raise an error if not. The client can use this to check whether a queue exists
+without modifying the server state. When set, all other method fields except name and
+no-wait are ignored. A declare with both passive and no-wait has no effect.
+Arguments are compared for semantic equivalence. 
+
+=item durable
+
+If set when creating a new queue, the queue will be marked as durable. Durable queues
+remain active when a server restarts. Non-durable queues (transient queues) are purged
+if/when a server restarts. Note that durable queues do not necessarily hold persistent
+messages, although it does not make sense to send persistent messages to a transient queue.
+
+=item exclusive
+
+Exclusive queues may only be accessed by the current connection, and are deleted when
+that connection closes. Passive declaration of an exclusive queue by other connections are
+not allowed.
+ 
+=item auto_delete
+
+If set, the queue is deleted when all consumers have finished using it. The last consumer
+can be cancelled either explicitly or because its channel is closed. If there was no consumer
+ever on the queue, it won't be deleted. Applications can explicitly delete auto-delete queues
+using the Delete method as normal. 
+
+=back
 
 =head2 bind_queue
 
@@ -639,6 +702,38 @@ Deletes only if unused. If exchange still has queue bindings server will raise a
     routing_key => ''
   )->deliver;
 
+Bind queue to an exchange.
+
+This method binds a queue to an exchange. Until a queue is bound it will
+not receive any messages. In a classic messaging model, store-and-forward
+queues are bound to a direct exchange and subscription queues are bound
+to a topic exchange.
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to bind.
+
+=item exchange
+
+Name of the exchange to bind to.
+
+=item routing_key
+
+Specifies the routing key for the binding. The routing key is used for
+routing messages depending on the exchange configuration. Not all exchanges
+use a routing key - refer to the specific exchange documentation. If the
+queue name is empty, the server uses the last queue declared on the channel.
+If the routing key is also empty, the server uses this queue name for the
+routing key as well. If the queue name is provided but the routing key is
+empty, the server does the binding with that empty routing key. The meaning
+of empty routing keys depends on the exchange implementation. 
+
+=back
+
 =head2 unbind_queue
 
   $channel->unbind_queue(
@@ -647,21 +742,132 @@ Deletes only if unused. If exchange still has queue bindings server will raise a
     routing_key => ''
   )->deliver;
 
+Unbind a queue from an exchange.
+
+This method unbinds a queue from an exchange.
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to unbind.
+
+=item exchange
+
+The name of the exchange to unbind from.
+
+=item routing_key
+
+Specifies the routing key of the binding to unbind.
+
+=back
+
 =head2 purge_queue
 
   $channel->purge_queue(queue => 'mq')->deliver;
+
+Purge a queue.
+
+This method removes all messages from a queue which are not awaiting acknowledgment.
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to purge.
+
+=back
 
 =head2 delete_queue
 
   $channel->delete_queue(queue => 'mq', if_empty => 1)->deliver;
 
+Delete a queue.
+
+This method deletes a queue. When a queue is deleted any pending messages
+are sent to a dead-letter queue if this is defined in the server configuration,
+and all consumers on the queue are cancelled. 
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to delete.
+
+=item if_unused
+
+If set, the server will only delete the queue if it has no consumers. If the queue
+has consumers the server does does not delete it but raises a channel exception instead. 
+
+=item if_empty
+
+If set, the server will only delete the queue if it has no messages. 
+
+=back
+  
 =head2 publish
 
-  $channel->publish(
+  my $message = $channel->publish(
     exchange    => 'mojo',
     routing_key => 'mq',
     body        => 'simple text body',
-  )->deliver();
+  );
+  $message->deliver();
+
+Publish a message.
+
+This method publishes a message to a specific exchange. The message will be
+routed to queues as defined by the exchange configuration and distributed to
+any active consumers when the transaction, if any, is committed.
+
+Following arguments are accepted:
+
+=over 2
+
+=item exchange
+
+Specifies the name of the exchange to publish to. The exchange name can be empty,
+meaning the default exchange. If the exchange name is specified, and that exchange
+does not exist, the server will raise a channel exception.
+
+=item routing_key
+
+Specifies the routing key for the message. The routing key is used for routing
+messages depending on the exchange configuration.
+
+=item mandatory
+
+This flag tells the server how to react if the message cannot be routed to a queue.
+If this flag is set, the server will return an unroutable message with a Return method.
+If this flag is zero, the server silently drops the message.
+
+All rejections are emitted as C<reject> event.
+
+  $message->on(reject => sub {
+    my $message = shift;
+    my $frame = shift;
+    my $method_frame = $frame->method_frame;
+    
+    my $reply_code = $method_frame->reply_code;
+    my $reply_text = $method_frame->reply_text;
+  });
+
+=item immediate
+
+This flag tells the server how to react if the message cannot be routed to a queue consumer
+immediately. If this flag is set, the server will return an undeliverable message with a
+Return method. If this flag is zero, the server will queue the message, but with no guarantee
+that it will ever be consumed.
+
+As said above, all rejections are emitted as C<reject> event.
+
+  $message->on(reject => sub { ... });
 
 =head2 consume
 
@@ -669,23 +875,145 @@ Deletes only if unused. If exchange still has queue bindings server will raise a
   $consumer->on(message => sub { ... });
   $consumer->deliver;
 
+This method asks the server to start a "consumer", which is a transient request for messages from a 
+specific queue. Consumers last as long as the channel they were declared on, or until the client cancels
+them.
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to consume from.
+
+=item consumer_tag
+
+Specifies the identifier for the consumer. The consumer tag is local to a channel, so two clients can use the 
+same consumer tags. If this field is empty the server will generate a unique tag.
+
+  $consumer->on(success => sub {
+    my $consumer = shift;
+    my $frame = shift;
+    
+    my $consumer_tag = $frame->method_frame->consumer_tag;
+  });
+
+=item no_local
+
+=item no_ack
+
+=item exclusive
+
+Request exclusive consumer access, meaning only this consumer can access the queue.
+  
+=back
+
 =head2 cancel
 
-  $channel->cancel(consumer_tag => 'amq.ctag....')
+  $channel->cancel(consumer_tag => 'amq.ctag....')->deliver;
 
-Cancels a consumer. All delivered messages are left unaffected and also new messages can be consumed until Cancel-Ok is received.
+End a queue consumer.
+
+This method cancels a consumer. This does not affect already delivered messages, but
+it does mean the server will not send any more messages for that consumer. The client
+may receive an arbitrary number of messages in between sending the cancel method and
+receiving the cancel-ok reply.
+
+Following arguments are accepted:
 
 =over 2
 
 =item consumer_tag
 
-This is consumer tag received upon successful reception of Consume-Ok.
+Holds the consumer tag specified by the client or provided by the server.
 
 =back
 
 =head2 get
 
+  my $get = $channel->get(queue => 'mq')
+  $get->deliver;
+
+Direct access to a queue.
+
+This method provides a direct access to the messages in a queue using
+a synchronous dialogue that is designed for specific types of application
+where synchronous functionality is more important than performance.
+
+This is simple event emitter to which you have to subscribe. It can emit:
+
+=over 2
+
+=item message
+
+Provide client with a message.
+
+This method delivers a message to the client following a get method. A message
+delivered by 'get-ok' must be acknowledged unless the no-ack option was set
+in the get method.
+
+You can access all get-ok reply parameters as below:
+
+  $get->on(message => sub {
+    my $get = shift;
+    my $get_ok = shift;
+    my $message = shift;
+    
+    say "Still got: " . $get_ok->method_frame->message_count;
+  });
+
+=item empty
+
+Indicate no messages available.
+
+This method tells the client that the queue has no messages available for the
+client.
+
+=back
+
+Following arguments are accepted:
+
+=over 2
+
+=item queue
+
+Specifies the name of the queue to get a message from.
+
+=item no_ack
+
+=back
+
 =head2 ack
+
+  $channel->ack(delivery_tag => 1);
+
+Acknowledge one or more messages.
+
+When sent by the client, this method acknowledges one or more messages
+delivered via the Deliver or Get-Ok methods. When sent by server, this
+method acknowledges one or more messages published with the Publish
+method on a channel in confirm mode. The acknowledgement can be for
+a single message or a set of messages up to and including a specific
+message.
+
+Following arguments are accepted:
+
+=over 2
+
+=item delivery_tag
+
+Server assigned delivery tag that was received with a message.
+
+=item multiple
+
+If set to 1, the delivery tag is treated as "up to and including", so
+that multiple messages can be acknowledged with a single method. If set
+to zero, the delivery tag refers to a single message. If the multiple
+field is 1, and the delivery tag is zero, this indicates acknowledgement
+of all outstanding messages.
+
+=back
 
 =head2 qos
 
@@ -711,7 +1039,48 @@ If set all settings will be applied connection wide.
 
 =head2 recover
 
+  $channel->recover(requeue => 0)->deliver;
+
+Redeliver unacknowledged messages.
+
+This method asks the server to redeliver all unacknowledged messages
+on a specified channel. Zero or more messages may be redelivered.
+
+=over 2
+
+=item requeue
+
+If this field is zero, the message will be redelivered to the original
+recipient. If this bit is 1, the server will attempt to requeue the
+message, potentially then delivering it to an alternative subscriber. 
+
+=back
+
 =head2 reject
+
+  $channel->reject(delivery_tag => 1, requeue => 0)->deliver;
+
+Reject an incoming message.
+
+This method allows a client to reject a message. It can be
+used to interrupt and cancel large incoming messages, or
+return untreatable messages to their original queue. 
+
+Following arguments are accepted:
+
+=over 2
+
+=item delivery_tag
+
+Server assigned delivery tag that was received with a message.
+
+=item requeue
+
+If requeue is true, the server will attempt to requeue the message.
+If requeue is false or the requeue attempt fails the messages are
+discarded or dead-lettered.
+
+=back
 
 =head2 select_tx
 
