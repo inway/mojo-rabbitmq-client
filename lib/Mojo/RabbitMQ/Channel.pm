@@ -565,33 +565,149 @@ the following new ones.
 
   $channel->close;
 
-Cancels all consumptions and closes channel afterwards.
+Cancels all consumers and closes channel afterwards.
 
 =head2 declare_exchange
 
+  my $exchange = $channel->declare_exchange(
+    exchange => 'mojo',
+    type => 'fanout',
+    durable => 1,
+    ...
+  )->deliver;
+
+This method creates an exchange if it does not exists. If it exists it verifies
+that it settings are correct, if not - channel is closed with appropriate message.
+  
+=over 2
+
+=item exchange
+
+Unique exchange name
+
+=item type
+
+Type is one of AMQP server implemented types, for example: fanout, direct, topic, headers.
+
+=item passive
+
+If set server will not create the exchange. This can be used to check exchange existence
+without creating it.
+
+=item durable
+
+Mark exchange as durable, which means that it will remain active upon server restart.
+Non-durable exchanges will be purged on server restart.
+
+=item auto_delete
+
+If set, the exchange will be deleted when no queue is using it.
+
+=item internal
+
+Internal exchanges may not be used directly by publishers, but can be bound to other exchanges.
+
+=back
+
 =head2 delete_exchange
+
+  $channel->delete_exchange(exchange => 'mojo')->deliver;
+  
+Deletes an exchange. When an exchange is deleted all queue bindings on that exchange are cancelled.
+
+=over 2
+
+=item exchange
+
+Exchange name.
+
+=item if_unused
+
+Deletes only if unused. If exchange still has queue bindings server will raise a channel exception.
+
+=back
 
 =head2 declare_queue
 
+  my $queue = $channel->declare_queue(queue => 'mq', durable => 1)->deliver
+
 =head2 bind_queue
+
+  $channel->bind_queue(
+    exchange => 'mojo',
+    queue => 'mq',
+    routing_key => ''
+  )->deliver;
 
 =head2 unbind_queue
 
+  $channel->unbind_queue(
+    exchange => 'mojo',
+    queue => 'mq',
+    routing_key => ''
+  )->deliver;
+
 =head2 purge_queue
+
+  $channel->purge_queue(queue => 'mq')->deliver;
 
 =head2 delete_queue
 
+  $channel->delete_queue(queue => 'mq', if_empty => 1)->deliver;
+
 =head2 publish
+
+  $channel->publish(
+    exchange    => 'mojo',
+    routing_key => 'mq',
+    body        => 'simple text body',
+  )->deliver();
 
 =head2 consume
 
+  my $consumer = $channel->consume(queue => 'mq');
+  $consumer->on(message => sub { ... });
+  $consumer->deliver;
+
 =head2 cancel
+
+  $channel->cancel(consumer_tag => 'amq.ctag....')
+
+Cancels a consumer. All delivered messages are left unaffected and also new messages can be consumed until Cancel-Ok is received.
+
+=over 2
+
+=item consumer_tag
+
+This is consumer tag received upon successful reception of Consume-Ok.
+
+=back
 
 =head2 get
 
 =head2 ack
 
 =head2 qos
+
+  $channel->qos(prefetch_count => 1)->deliver;
+  
+Sets specified Quality of Service to channel, or entire connection. Accepts following arguments:
+
+=over 2
+
+=item prefetch_size
+
+Prefetch window size in octets.
+
+=item prefetch_count
+
+Prefetch window in complete messages.
+
+=item global
+
+If set all settings will be applied connection wide.
+
+=back
 
 =head2 recover
 
@@ -605,7 +721,7 @@ Cancels all consumptions and closes channel afterwards.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Method>
+L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Method>, L<Net::AMQP::Protocol::v0_8>
 
 =head1 COPYRIGHT AND LICENSE
 
