@@ -260,13 +260,17 @@ sub _connected {
   # Store connection information in transaction
   my $handle = $stream->handle;
 
-  # Load AMQP specs
-  my $file = "amqp0-9-1.stripped.extended.xml"
-    ;    # Original spec is in "fixed_amqp0-8.xml"
-  my $home  = Mojo::Home->new();
-  my $share = $home->parse($self->_rabbitmq_lib_dir)
-    ->rel_dir('RabbitMQ/share/' . $file);
-  Net::AMQP::Protocol->load_xml_spec($share);
+  # Detect that xml spec was already loaded
+  my $loaded = eval { Net::AMQP::Protocol::Connection::StartOk->new; 1 };
+  unless ($loaded) {    # Load AMQP specs
+    my $file = "amqp0-9-1.stripped.extended.xml";
+
+    # Original spec is in "fixed_amqp0-8.xml"
+    my $home  = Mojo::Home->new();
+    my $share = $home->parse($self->_rabbitmq_lib_dir)
+      ->rel_dir('RabbitMQ/share/' . $file);
+    Net::AMQP::Protocol->load_xml_spec($share);
+  }
 
   $self->_write($id => Net::AMQP::Protocol->header);
 
