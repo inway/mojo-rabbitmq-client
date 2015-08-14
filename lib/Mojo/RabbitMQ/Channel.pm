@@ -77,7 +77,7 @@ sub _push_queue_or_consume {
       $self->_push_read_header_and_body(
         'return',
         $frame => sub {
-          $cb->emit(return => @_);
+          $cb->emit(reject => @_);
         },
         sub {
           $self->emit(error => 'Return callback failure: ' . shift);
