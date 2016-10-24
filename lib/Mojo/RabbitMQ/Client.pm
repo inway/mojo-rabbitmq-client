@@ -28,8 +28,8 @@ has ioloop          => sub { Mojo::IOLoop->singleton };
 has max_buffer_size => 16384;
 has queue    => sub { Mojo::RabbitMQ::LocalQueue->new };
 has channels => sub { {} };
-has stream_id  => undef;
-has login_user => '';
+has stream_id   => undef;
+has login_user  => '';
 
 sub connect {
   my $self = shift;
@@ -38,18 +38,15 @@ sub connect {
   $self->url(Mojo::URL->new($self->url));
 
   my $id;
-  $id = $self->_connect($self->url, sub { $self->_connected($id) });
+  $id = $self->_connect($self->url, sub { $self->_connected($id, @_) });
   $self->stream_id($id);
 
   return $id;
 }
 
-sub open_channel {
+sub add_channel {
   my $self    = shift;
   my $channel = shift;
-
-  return $channel->emit(error => 'Client connection not opened')
-    unless $self->is_open;
 
   my $id = $channel->id;
   if ($id and $self->channels->{$id}) {
@@ -70,7 +67,17 @@ sub open_channel {
 
   $self->channels->{$id} = $channel->id($id)->client($self);
 
-  $channel->_open;
+  return $channel;
+}
+
+sub open_channel {
+  my $self    = shift;
+  my $channel = shift;
+
+  return $channel->emit(error => 'Client connection not opened')
+    unless $self->is_open;
+
+  $self->add_channel($channel)->open;
 
   return $self;
 }
@@ -212,13 +219,14 @@ sub _connect {
   my ($self, $server, $cb) = @_;
 
   # Options
+  # Parse according to (https://www.rabbitmq.com/uri-spec.html)
   my $url     = $self->url;
   my $query   = $url->query;
   my $options = {
     address  => $url->host,
-    port     => $url->port,
+    port     => $url->port || 5672,
     timeout  => $self->connect_timeout,
-    tls      => $url->scheme eq 'rabbitmqs',
+    tls      => ($url->scheme =~ /^(amqp|rabbitmq)s$/) ? 1 : 0, # Fallback support for rabbitmq
     tls_ca   => scalar $query->param('ca'),
     tls_cert => scalar $query->param('cert'),
     tls_key  => scalar $query->param('key')
@@ -252,7 +260,7 @@ sub _connect {
 sub _rabbitmq_lib_dir { catdir dirname(__FILE__), '..' }
 
 sub _connected {
-  my ($self, $id) = @_;
+  my ($self, $id, $query) = @_;
 
   # Inactivity timeout
   my $stream = $self->_loop->stream($id)->timeout(0);
@@ -295,11 +303,10 @@ sub _connected {
       $self->_write_frame(
         Net::AMQP::Protocol::Connection::StartOk->new(
           client_properties => {
-            platform => 'Perl',
-            product  => __PACKAGE__,
-            information =>
-              'https://github.com/InWayOpenSource/mojo-rabbitmq-client',
-            version => __PACKAGE__->VERSION,
+            platform    => 'Perl',
+            product     => __PACKAGE__,
+            information => 'https://github.com/inway/mojo-rabbitmq-client',
+            version     => __PACKAGE__->VERSION,
           },
           mechanism => 'AMQPLAIN',
           response  => {LOGIN => $user, PASSWORD => $pass,},
