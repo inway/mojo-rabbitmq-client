@@ -20,16 +20,16 @@ $client->catch(sub { warn "Some error caught in client"; $client->stop });
 $client->on(
   open => sub {
     my ($client) = @_;
-    
+
     # Create a new channel with auto-assigned id
     my $channel = Mojo::RabbitMQ::Channel->new();
-    
+
     $channel->catch(sub { warn "Error on channel received"; $client->stop });
-    
+
     $channel->on(
       open => sub {
         my ($channel) = @_;
-        
+
         # Publish some example message to test_queue
         my $publish = $channel->publish(
           exchange    => 'test',
@@ -41,7 +41,7 @@ $client->on(
         );
         # Deliver this message to server
         $publish->deliver();
-        
+
         # Start consuming messages from test_queue
         my $consumer = $channel->consume(queue => 'test_queue');
         $consumer->on(message => sub { say "Got a message" });

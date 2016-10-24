@@ -466,7 +466,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 =head1 SYNOPSIS
 
   use Mojo::RabbitMQ::Client;
-  
+
   my $client = Mojo::RabbitMQ::Client->new(
     url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
 
@@ -477,16 +477,16 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
   $client->on(
     open => sub {
       my ($client) = @_;
-      
+
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Channel->new();
-      
+
       $channel->catch(sub { warn "Error on channel received"; $client->stop });
-      
+
       $channel->on(
         open => sub {
           my ($channel) = @_;
-          
+
           # Publish some example message to test_queue
           my $publish = $channel->publish(
             exchange    => 'test',
@@ -498,7 +498,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
           );
           # Deliver this message to server
           $publish->deliver();
-          
+
           # Start consuming messages from test_queue
           my $consumer = $channel->consume(queue => 'test_queue');
           $consumer->on(message => sub { say "Got a message" });
@@ -510,7 +510,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       $client->open_channel($channel);
     }
   );
-  
+
   # Start connection
   $client->connect();
 

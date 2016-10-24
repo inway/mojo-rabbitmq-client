@@ -488,7 +488,7 @@ Mojo::RabbitMQ::Channel - handles all channel related methods
 =head1 SYNOPSIS
 
   use Mojo::RabbitMQ::Channel;
-  
+
   my $channel = Mojo::RabbitMQ::Channel->new();
 
   $channel->catch(sub { warn "Some channel error occured: " . $_[1] });
@@ -500,7 +500,7 @@ Mojo::RabbitMQ::Channel - handles all channel related methods
     }
   );
   $channel->on(close => sub { warn "Channel closed" });
-  
+
   $client->open_channel($channel);
 
 =head1 DESCRIPTION
@@ -594,7 +594,7 @@ Unique exchange name
 Each exchange belongs to one of a set of exchange types implemented by the server. The
 exchange types define the functionality of the exchange - i.e. how messages are routed
 through it. It is not valid or meaningful to attempt to change the type of an existing
-exchange. 
+exchange.
 
 =item passive
 
@@ -602,13 +602,13 @@ If set, the server will reply with Declare-Ok if the exchange already exists wit
 name, and raise an error if not. The client can use this to check whether an exchange
 exists without modifying the server state. When set, all other method fields except name
 and no-wait are ignored. A declare with both passive and no-wait has no effect. Arguments
-are compared for semantic equivalence. 
+are compared for semantic equivalence.
 
 =item durable
 
 If set when creating a new exchange, the exchange will be marked as durable. Durable exchanges
 remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged
-if/when a server restarts. 
+if/when a server restarts.
 
 =item auto_delete
 
@@ -617,14 +617,14 @@ If set, the exchange is deleted when all queues have finished using it.
 =item internal
 
 If set, the exchange may not be used directly by publishers, but only when bound to other exchanges.
-Internal exchanges are used to construct wiring that is not visible to applications. 
+Internal exchanges are used to construct wiring that is not visible to applications.
 
 =back
 
 =head2 delete_exchange
 
   $channel->delete_exchange(exchange => 'mojo')->deliver;
-  
+
 Delete an exchange.
 
 This method deletes an exchange. When an exchange is deleted all queue bindings on the exchange
@@ -641,7 +641,7 @@ Exchange name.
 =item if_unused
 
 If set, the server will only delete the exchange if it has no queue bindings. If the exchange has
-queue bindings the server does not delete it but raises a channel exception instead. 
+queue bindings the server does not delete it but raises a channel exception instead.
 
 =back
 
@@ -670,7 +670,7 @@ If set, the server will reply with Declare-Ok if the queue already exists with t
 name, and raise an error if not. The client can use this to check whether a queue exists
 without modifying the server state. When set, all other method fields except name and
 no-wait are ignored. A declare with both passive and no-wait has no effect.
-Arguments are compared for semantic equivalence. 
+Arguments are compared for semantic equivalence.
 
 =item durable
 
@@ -684,13 +684,13 @@ messages, although it does not make sense to send persistent messages to a trans
 Exclusive queues may only be accessed by the current connection, and are deleted when
 that connection closes. Passive declaration of an exclusive queue by other connections are
 not allowed.
- 
+
 =item auto_delete
 
 If set, the queue is deleted when all consumers have finished using it. The last consumer
 can be cancelled either explicitly or because its channel is closed. If there was no consumer
 ever on the queue, it won't be deleted. Applications can explicitly delete auto-delete queues
-using the Delete method as normal. 
+using the Delete method as normal.
 
 =back
 
@@ -730,7 +730,7 @@ queue name is empty, the server uses the last queue declared on the channel.
 If the routing key is also empty, the server uses this queue name for the
 routing key as well. If the queue name is provided but the routing key is
 empty, the server does the binding with that empty routing key. The meaning
-of empty routing keys depends on the exchange implementation. 
+of empty routing keys depends on the exchange implementation.
 
 =back
 
@@ -790,7 +790,7 @@ Delete a queue.
 
 This method deletes a queue. When a queue is deleted any pending messages
 are sent to a dead-letter queue if this is defined in the server configuration,
-and all consumers on the queue are cancelled. 
+and all consumers on the queue are cancelled.
 
 Following arguments are accepted:
 
@@ -803,14 +803,14 @@ Specifies the name of the queue to delete.
 =item if_unused
 
 If set, the server will only delete the queue if it has no consumers. If the queue
-has consumers the server does does not delete it but raises a channel exception instead. 
+has consumers the server does does not delete it but raises a channel exception instead.
 
 =item if_empty
 
-If set, the server will only delete the queue if it has no messages. 
+If set, the server will only delete the queue if it has no messages.
 
 =back
-  
+
 =head2 publish
 
   my $message = $channel->publish(
@@ -853,7 +853,7 @@ All rejections are emitted as C<reject> event.
     my $message = shift;
     my $frame = shift;
     my $method_frame = $frame->method_frame;
-    
+
     my $reply_code = $method_frame->reply_code;
     my $reply_text = $method_frame->reply_text;
   });
@@ -877,7 +877,7 @@ As said above, all rejections are emitted as C<reject> event.
   $consumer->on(message => sub { ... });
   $consumer->deliver;
 
-This method asks the server to start a "consumer", which is a transient request for messages from a 
+This method asks the server to start a "consumer", which is a transient request for messages from a
 specific queue. Consumers last as long as the channel they were declared on, or until the client cancels
 them.
 
@@ -891,13 +891,13 @@ Specifies the name of the queue to consume from.
 
 =item consumer_tag
 
-Specifies the identifier for the consumer. The consumer tag is local to a channel, so two clients can use the 
+Specifies the identifier for the consumer. The consumer tag is local to a channel, so two clients can use the
 same consumer tags. If this field is empty the server will generate a unique tag.
 
   $consumer->on(success => sub {
     my $consumer = shift;
     my $frame = shift;
-    
+
     my $consumer_tag = $frame->method_frame->consumer_tag;
   });
 
@@ -906,18 +906,18 @@ same consumer tags. If this field is empty the server will generate a unique tag
 If the no-local field is set the server will not send messages to the connection that published them.
 
 See L<RabbitMQ Compatibility and Conformance|https://www.rabbitmq.com/specification.html>
- 
+
 =item no_ack
 
 If this field is set the server does not expect acknowledgements for messages. That is, when a message
 is delivered to the client the server assumes the delivery will succeed and immediately dequeues it.
 This functionality may increase performance but at the cost of reliability. Messages can get lost if
-a client dies before they are delivered to the application. 
+a client dies before they are delivered to the application.
 
 =item exclusive
 
 Request exclusive consumer access, meaning only this consumer can access the queue.
-  
+
 =back
 
 =head2 cancel
@@ -970,7 +970,7 @@ You can access all get-ok reply parameters as below:
     my $get = shift;
     my $get_ok = shift;
     my $message = shift;
-    
+
     say "Still got: " . $get_ok->method_frame->message_count;
   });
 
@@ -996,7 +996,7 @@ Specifies the name of the queue to get a message from.
 If this field is set the server does not expect acknowledgements for messages. That is, when a message
 is delivered to the client the server assumes the delivery will succeed and immediately dequeues it.
 This functionality may increase performance but at the cost of reliability. Messages can get lost if
-a client dies before they are delivered to the application. 
+a client dies before they are delivered to the application.
 
 =back
 
@@ -1034,7 +1034,7 @@ of all outstanding messages.
 =head2 qos
 
   $channel->qos(prefetch_count => 1)->deliver;
-  
+
 Sets specified Quality of Service to channel, or entire connection. Accepts following arguments:
 
 =over 2
@@ -1068,7 +1068,7 @@ on a specified channel. Zero or more messages may be redelivered.
 
 If this field is zero, the message will be redelivered to the original
 recipient. If this bit is 1, the server will attempt to requeue the
-message, potentially then delivering it to an alternative subscriber. 
+message, potentially then delivering it to an alternative subscriber.
 
 =back
 
@@ -1080,7 +1080,7 @@ Reject an incoming message.
 
 This method allows a client to reject a message. It can be
 used to interrupt and cancel large incoming messages, or
-return untreatable messages to their original queue. 
+return untreatable messages to their original queue.
 
 Following arguments are accepted:
 
@@ -1109,7 +1109,7 @@ at least where all publish or ack requests affect a single queue. Transactions t
 multiple queues may be non-atomic, given that queues can be created and destroyed
 asynchronously, and such events do not form part of any transaction.
 Further, the behaviour of transactions with respect to the immediate and mandatory flags
-on Basic.Publish methods is not defined. 
+on Basic.Publish methods is not defined.
 
   $channel->select_tx()->deliver;
 
@@ -1125,7 +1125,7 @@ at least once on a channel before using the Commit or Rollback methods.
 Commit the current transaction.
 
 This method commits all message publications and acknowledgments performed in the current
-transaction. A new transaction starts immediately after a commit. 
+transaction. A new transaction starts immediately after a commit.
 
 =head2 rollback_tx
 
@@ -1136,7 +1136,7 @@ Abandon the current transaction.
 This method abandons all message publications and acknowledgments performed in the current
 transaction. A new transaction starts immediately after a rollback. Note that unacked messages
 will not be automatically redelivered by rollback; if that is required an explicit recover
-call should be issued. 
+call should be issued.
 
 =head1 SEE ALSO
 
