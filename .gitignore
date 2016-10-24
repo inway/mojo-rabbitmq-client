@@ -2,7 +2,7 @@
 /.build/
 _build/
 cover_db/
-inc/
+inc/.author
 Build
 !Build/
 Build.bat
