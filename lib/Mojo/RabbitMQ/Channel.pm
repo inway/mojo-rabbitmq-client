@@ -15,6 +15,11 @@ has consumer_cbs  => sub { {} };
 has return_cbs    => sub { {} };
 
 sub _open {
+  warn "Deprecated call to _open on channel";
+  return shift->open(@_);
+}
+
+sub open {
   my $self = shift;
 
   if ($self->is_open) {
