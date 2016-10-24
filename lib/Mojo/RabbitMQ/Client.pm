@@ -14,7 +14,7 @@ use Net::AMQP::Common qw(:all);
 use Mojo::RabbitMQ::Channel;
 use Mojo::RabbitMQ::LocalQueue;
 
-our $VERSION = "0.0.1";
+our $VERSION = "0.0.2";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
