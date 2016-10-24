@@ -1,5 +1,5 @@
 
-# Mojo::RabbitMQ::Client [![Build Status](https://travis-ci.org/InWayOpenSource/mojo-rabbitmq-client.svg?branch=master)](https://travis-ci.org/InWayOpenSource/mojo-rabbitmq-client)
+# Mojo::RabbitMQ::Client [![Build Status](https://travis-ci.org/inway/mojo-rabbitmq-client.svg?branch=master)](https://travis-ci.org/inway/mojo-rabbitmq-client)
 
 This is a rewrite of great module AnyEvent::RabbitMQ to work on top Mojo::IOLoop.
 
@@ -10,8 +10,9 @@ Basic publish subscribe example is below. You can find more in 'examples' direct
 ```perl
 use Mojo::RabbitMQ::Client;
 
+# Supply URL according to (https://www.rabbitmq.com/uri-spec.html)
 my $client = Mojo::RabbitMQ::Client->new(
-  url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
+  url => 'amqp://guest:guest@127.0.0.1:5672/');
 
 # Catch all client related errors
 $client->catch(sub { warn "Some error caught in client"; $client->stop });
@@ -29,6 +30,7 @@ $client->on(
     $channel->on(
       open => sub {
         my ($channel) = @_;
+        $channel->qos(prefetch_count => 1)->deliver;
 
         # Publish some example message to test_queue
         my $publish = $channel->publish(
@@ -40,7 +42,7 @@ $client->on(
           header      => {}
         );
         # Deliver this message to server
-        $publish->deliver();
+        $publish->deliver;
 
         # Start consuming messages from test_queue
         my $consumer = $channel->consume(queue => 'test_queue');

@@ -486,6 +486,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       $channel->on(
         open => sub {
           my ($channel) = @_;
+          $channel->qos(prefetch_count => 1)->deliver;
 
           # Publish some example message to test_queue
           my $publish = $channel->publish(
@@ -497,7 +498,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
             header      => {}
           );
           # Deliver this message to server
-          $publish->deliver();
+          $publish->deliver;
 
           # Start consuming messages from test_queue
           my $consumer = $channel->consume(queue => 'test_queue');
