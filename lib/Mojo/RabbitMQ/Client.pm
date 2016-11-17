@@ -351,7 +351,7 @@ sub _tune {
  # -and-
  # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
  # heartbeats, the peer is considered to be unreachable.
-      $self->_loop->recurring(
+      $self->{heartbeat_tid} = $self->_loop->recurring(
         $heartbeat / 2 => sub {
           return unless time() - $self->heartbeat_sent > $heartbeat / 2;
           $self->_write_frame(Net::AMQP::Frame::Heartbeat->new());
@@ -460,6 +460,14 @@ sub _write {
 
   $self->_loop->stream($id)->write($frame)
     if defined $self->_loop->stream($id);
+}
+
+sub DESTROY {
+    my $self = shift;
+    my $ioloop = $self->ioloop or return;
+    my $heartbeat_tid = $self->{heartbeat_tid};
+
+    $ioloop->remove($heartbeat_tid) if $heartbeat_tid;
 }
 
 1;
