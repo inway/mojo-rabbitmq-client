@@ -374,7 +374,12 @@ sub get {
 
 sub ack {
   my $self = shift;
-  my %args = @_;
+  my %args = ();
+  if (ref($_[0]) eq 'HASH') {
+    $args{delivery_tag} = $_[0]->{deliver}->method_frame->delivery_tag;
+  } else {
+    %args = @_;
+  }
 
   return $self->_prepare_method(
     'Basic::Ack' => {

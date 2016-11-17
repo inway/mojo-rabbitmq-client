@@ -62,3 +62,29 @@ $client->connect();
 # Start Mojo::IOLoop if not running already
 $client->start();
 ```
+
+## Dedicated consumer
+
+```perl
+use Mojo::RabbitMQ::Consumer;
+my $consumer = Mojo::RabbitMQ::Consumer->new(
+  url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+  defaults => {
+    qos      => {prefetch_count => 1},
+    queue    => {durable        => 1},
+    consumer => {no_ack         => 0},
+  }
+);
+
+$consumer->catch(sub { warn "Some error caught in Consumer"; $consumer->stop } );
+$consumer->on('success' => sub { say "Consumer ready" });
+$consumer->on(
+  'message' => sub {
+    my ($consumer, $message) = @_;
+
+    $consumer->channel->ack($message)->deliver;
+  }
+);
+
+$consumer->start;
+```
