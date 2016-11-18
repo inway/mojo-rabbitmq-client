@@ -15,7 +15,7 @@ sub start {
   $self->client($client);
 
   # Catch all client related errors
-  $client->catch(sub { warn "Some error caught in client"; $client->stop });
+  $client->catch(sub { die "Some error caught in client" });
 
   # When connection is in Open state, open new channel
   $client->on(
@@ -28,7 +28,7 @@ sub start {
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Channel->new();
 
-      $channel->catch(sub { warn "Error on channel received"; $client->stop });
+      $channel->catch(sub { die "Error on channel received" });
 
       $channel->on(
         open => sub {
@@ -74,7 +74,7 @@ sub start {
 
         }
       );
-      $channel->on(close => sub { say 'Channel closed' });
+      $channel->on(close => sub { warn 'Channel closed' });
 
       $client->open_channel($channel);
     }
