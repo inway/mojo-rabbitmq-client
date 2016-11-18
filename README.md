@@ -15,7 +15,7 @@ my $client = Mojo::RabbitMQ::Client->new(
   url => 'amqp://guest:guest@127.0.0.1:5672/');
 
 # Catch all client related errors
-$client->catch(sub { warn "Some error caught in client"; $client->stop });
+$client->catch(sub { warn "Some error caught in client" });
 
 # When connection is in Open state, open new channel
 $client->on(
@@ -25,7 +25,7 @@ $client->on(
     # Create a new channel with auto-assigned id
     my $channel = Mojo::RabbitMQ::Channel->new();
 
-    $channel->catch(sub { warn "Error on channel received"; $client->stop });
+    $channel->catch(sub { warn "Error on channel received" });
 
     $channel->on(
       open => sub {
@@ -76,7 +76,7 @@ my $consumer = Mojo::RabbitMQ::Consumer->new(
   }
 );
 
-$consumer->catch(sub { warn "Some error caught in Consumer"; $consumer->stop } );
+$consumer->catch(sub { die "Some error caught in Consumer" } );
 $consumer->on('success' => sub { say "Consumer ready" });
 $consumer->on(
   'message' => sub {

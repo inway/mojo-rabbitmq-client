@@ -466,8 +466,9 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   use Mojo::RabbitMQ::Client;
 
+  # Supply URL according to (https://www.rabbitmq.com/uri-spec.html)
   my $client = Mojo::RabbitMQ::Client->new(
-    url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
+    url => 'amqp://guest:guest@127.0.0.1:5672/');
 
   # Catch all client related errors
   $client->catch(sub { warn "Some error caught in client"; });
@@ -513,7 +514,9 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   # Start connection
   $client->connect();
-  Mojo::IOLoop->start;
+
+  # Start Mojo::IOLoop if not running already
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head1 DESCRIPTION
 
@@ -605,7 +608,7 @@ L<Mojo::RabbitMQ::Channel>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2015, Sebastian Podjasek
+Copyright (C) 2015-2016, Sebastian Podjasek and others
 
 Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
 

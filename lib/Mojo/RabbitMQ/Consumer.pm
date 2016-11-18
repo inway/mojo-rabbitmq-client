@@ -85,3 +85,61 @@ sub start {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Mojo::RabbitMQ::Consumer - simple Mojo::RabbitMQ::Client based consumer
+
+=head1 SYNOPSIS
+
+  use Mojo::RabbitMQ::Consumer;
+  my $consumer = Mojo::RabbitMQ::Consumer->new(
+    url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+    defaults => {
+      qos      => {prefetch_count => 1},
+      queue    => {durable        => 1},
+      consumer => {no_ack         => 0},
+    }
+  );
+
+  $consumer->catch(sub { die "Some error caught in Consumer" } );
+  $consumer->on('success' => sub { say "Consumer ready" });
+  $consumer->on(
+    'message' => sub {
+      my ($consumer, $message) = @_;
+
+      $consumer->channel->ack($message)->deliver;
+    }
+  );
+
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
+=head1 DESCRIPTION
+
+=head1 EVENTS
+
+L<Mojo::RabbitMQ::Consumer> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head1 ATTRIBUTES
+
+L<Mojo::RabbitMQ::Consumer> has following attributes.
+
+=head1 METHODS
+
+L<Mojo::RabbitMQ::Consumer> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
+
+=head1 SEE ALSO
+
+L<Mojo::RabbitMQ::Client>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2015-2016, Sebastian Podjasek and others
+
+This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
+
+=cut
