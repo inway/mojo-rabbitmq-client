@@ -60,7 +60,7 @@ $client->on(
 $client->connect();
 
 # Start Mojo::IOLoop if not running already
-$client->start();
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 ```
 
 ## Dedicated consumer
@@ -86,5 +86,5 @@ $consumer->on(
   }
 );
 
-$consumer->start;
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 ```
