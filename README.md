@@ -88,3 +88,20 @@ $consumer->on(
 
 Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 ```
+
+## Quick publisher
+
+```perl
+use Mojo::RabbitMQ::Publisher;
+my $publisher = Mojo::RabbitMQ::Publisher->new(
+  url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
+);
+
+$publisher->catch(sub { die "Some error caught in Publisher" } );
+$publisher->on('success' => sub { say "Publisher ready" });
+
+$publisher->publish('plain text');
+$publisher->publish({encode => { to => 'json'}});
+
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+```
