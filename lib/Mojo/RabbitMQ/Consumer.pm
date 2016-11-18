@@ -82,14 +82,6 @@ sub start {
 
   # Start connection
   $client->connect;
-
-  # Start Mojo::IOLoop if not running already
-  $client->_loop->start unless $client->_loop->is_running;
-}
-
-sub stop {
-  my $self = shift;
-  $self->client->_loop->stop if $self->client->_loop->is_running;
 }
 
 1;

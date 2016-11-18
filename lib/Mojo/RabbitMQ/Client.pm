@@ -103,22 +103,6 @@ sub close {
   );
 }
 
-sub start {
-  $_[0]->_loop->start unless $_[0]->_loop->is_running;
-}
-
-sub stop {
-  $_[0]->_loop->stop if $_[0]->_loop->is_running;
-}
-
-sub timer {
-  shift->_loop->timer(@_);
-}
-
-sub recurring {
-  shift->_loop->recurring(@_);
-}
-
 sub _loop { $_[0]->ioloop }
 
 sub _error {
@@ -351,7 +335,7 @@ sub _tune {
  # -and-
  # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
  # heartbeats, the peer is considered to be unreachable.
-      $self->_loop->recurring(
+      $self->{heartbeat_tid} = $self->_loop->recurring(
         $heartbeat / 2 => sub {
           return unless time() - $self->heartbeat_sent > $heartbeat / 2;
           $self->_write_frame(Net::AMQP::Frame::Heartbeat->new());
@@ -462,6 +446,14 @@ sub _write {
     if defined $self->_loop->stream($id);
 }
 
+sub DESTROY {
+    my $self = shift;
+    my $ioloop = $self->ioloop or return;
+    my $heartbeat_tid = $self->{heartbeat_tid};
+
+    $ioloop->remove($heartbeat_tid) if $heartbeat_tid;
+}
+
 1;
 
 =encoding utf8
@@ -478,7 +470,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
     url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
 
   # Catch all client related errors
-  $client->catch(sub { warn "Some error caught in client"; $client->stop });
+  $client->catch(sub { warn "Some error caught in client"; });
 
   # When connection is in Open state, open new channel
   $client->on(
@@ -488,7 +480,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Channel->new();
 
-      $channel->catch(sub { warn "Error on channel received"; $client->stop });
+      $channel->catch(sub { warn "Error on channel received"; });
 
       $channel->on(
         open => sub {
@@ -521,9 +513,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   # Start connection
   $client->connect();
-
-  # Start Mojo::IOLoop if not running already
-  $client->start();
+  Mojo::IOLoop->start;
 
 =head1 DESCRIPTION
 
@@ -608,22 +598,6 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 =head2 delete_channel
 
   my $removed = $client->delete_channel($channel->id);
-
-=head2 start
-
-  $client->start();
-
-=head2 stop
-
-  $client->stop();
-
-=head2 timer
-
-  $client->timer(10 => sub { ... });
-
-=head2 recurring
-
-  $client->recurring(5 => sub { ... });
 
 =head1 SEE ALSO
 

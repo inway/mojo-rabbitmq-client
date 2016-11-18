@@ -8,13 +8,13 @@ my $amqp
   url => ($ENV{MOJO_RABBITMQ_URL} || 'rabbitmq://guest:guest@127.0.0.1:5672/')
   );
 
-$amqp->timer(    # Global test timeout
+$amqp->ioloop->timer(    # Global test timeout
   10 => sub {
-    $amqp->stop;
+    $amqp->ioloop->stop;
   }
 );
 
-$amqp->catch(sub { fail('Connection or other server errors'); $amqp->stop; });
+$amqp->catch(sub { fail('Connection or other server errors'); $amqp->ioloop->stop; });
 $amqp->on(connect => sub { pass('Connected to server') });
 $amqp->on(
   open => sub {
@@ -37,7 +37,7 @@ $amqp->on(
         $exchange->catch(
           sub {
             fail('Failed to declare exchange');
-            $amqp->stop;
+            $amqp->ioloop->stop;
           }
         );
         $exchange->on(
@@ -51,7 +51,7 @@ $amqp->on(
             $queue->catch(
               sub {
                 fail('Failed to declare queue');
-                $amqp->stop;
+                $amqp->ioloop->stop;
               }
             );
             $queue->on(
@@ -66,7 +66,7 @@ $amqp->on(
                 $bind->catch(
                   sub {
                     fail('Failed to bind queue');
-                    $amqp->stop;
+                    $amqp->ioloop->stop;
                   }
                 );
                 $bind->on(
@@ -84,7 +84,7 @@ $amqp->on(
                     $publish->catch(
                       sub {
                         fail('Message not published');
-                        $amqp->stop;
+                        $amqp->ioloop->stop;
                       }
                     );
                     $publish->on(
@@ -95,7 +95,7 @@ $amqp->on(
                     $publish->on(
                       return => sub {
                         fail('Message returned');
-                        $amqp->stop;
+                        $amqp->ioloop->stop;
                       }
                     );
                     $publish->deliver();
@@ -115,7 +115,7 @@ $amqp->on(
                     $consumer->catch(
                       sub {
                         fail('Subscription failed');
-                        $amqp->stop;
+                        $amqp->ioloop->stop;
                       }
                     );
                     $consumer->deliver;
@@ -130,14 +130,14 @@ $amqp->on(
         $exchange->deliver();
       }
     );
-    $channel->on(close => sub { fail('Channel closed'); $amqp->stop; });
-    $channel->catch(sub { fail('Channel not opened'); $amqp->stop; });
+    $channel->on(close => sub { fail('Channel closed'); $amqp->ioloop->stop; });
+    $channel->catch(sub { fail('Channel not opened'); $amqp->ioloop->stop; });
 
     $self->open_channel($channel);
   }
 );
 $amqp->on(close => sub { pass('Connection closed'); });
-$amqp->on(disconnect => sub { pass('Disconnected'); $amqp->stop; });
+$amqp->on(disconnect => sub { pass('Disconnected'); $amqp->ioloop->stop; });
 $amqp->connect();
 
-$amqp->start();
+$amqp->ioloop->start;
