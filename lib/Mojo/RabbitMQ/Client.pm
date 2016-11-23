@@ -534,6 +534,45 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
   # Start Mojo::IOLoop if not running already
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
+=head2 CONSUMER
+
+  use Mojo::RabbitMQ::Client;
+  my $consumer = Mojo::RabbitMQ::Client->consumer(
+    url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+    defaults => {
+      qos      => {prefetch_count => 1},
+      queue    => {durable        => 1},
+      consumer => {no_ack         => 0},
+    }
+  );
+
+  $consumer->catch(sub { die "Some error caught in Consumer" } );
+  $consumer->on('success' => sub { say "Consumer ready" });
+  $consumer->on(
+    'message' => sub {
+      my ($consumer, $message) = @_;
+
+      $consumer->channel->ack($message)->deliver;
+    }
+  );
+
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
+=head2 PUBLISHER
+
+  use Mojo::RabbitMQ::Client;
+  my $publisher = Mojo::RabbitMQ::Client->publisher(
+    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
+  );
+
+  $publisher->catch(sub { die "Some error caught in Publisher" } );
+  $publisher->on('success' => sub { say "Publisher ready" });
+
+  $publisher->publish('plain text');
+  $publisher->publish({encode => { to => 'json'}});
+
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
 =head1 DESCRIPTION
 
 L<Mojo::RabbitMQ::Client> is a rewrite of L<AnyEvent::RabbitMQ> to work on top of L<Mojo::IOLoop>.
