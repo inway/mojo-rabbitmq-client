@@ -1,0 +1,4 @@
+name = "Mojo-RabbitMQ-Client"
+badges = ["travis"]
+module_maker="ModuleBuildTiny"
+

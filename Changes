@@ -1,3 +1,6 @@
+
+{{$NEXT}}
+
 0.0.4  2016-11-23
   - Moved all utility packages to Mojo::RabbitMQ::Client::* namespace
   - Added shorthand static methods for consumer & publisher
