@@ -66,8 +66,8 @@ Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 ## Dedicated consumer
 
 ```perl
-use Mojo::RabbitMQ::Consumer;
-my $consumer = Mojo::RabbitMQ::Consumer->new(
+use Mojo::RabbitMQ::Client;
+my $consumer = Mojo::RabbitMQ::Client->consumer(
   url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
   defaults => {
     qos      => {prefetch_count => 1},
@@ -92,8 +92,8 @@ Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 ## Quick publisher
 
 ```perl
-use Mojo::RabbitMQ::Publisher;
-my $publisher = Mojo::RabbitMQ::Publisher->new(
+use Mojo::RabbitMQ::Client;
+my $publisher = Mojo::RabbitMQ::Client->publisher(
   url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
 );
 

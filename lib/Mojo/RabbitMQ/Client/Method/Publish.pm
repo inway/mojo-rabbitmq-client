@@ -1,5 +1,5 @@
-package Mojo::RabbitMQ::Method::Publish;
-use Mojo::Base 'Mojo::RabbitMQ::Method';
+package Mojo::RabbitMQ::Client::Method::Publish;
+use Mojo::Base 'Mojo::RabbitMQ::Client::Method';
 
 sub setup {
   my $self = shift;
@@ -96,13 +96,13 @@ sub _body {
 
 =head1 NAME
 
-Mojo::RabbitMQ::Method::Publish - single class to do all of AMQP Publish method magic
+Mojo::RabbitMQ::Client::Method::Publish - single class to do all of AMQP Publish method magic
 
 =head1 SYNOPSIS
 
-  use Mojo::RabbitMQ::Method::Publish;
-  
-  my $method = Mojo::RabbitMQ::Method::Publish->new(
+  use Mojo::RabbitMQ::Client::Method::Publish;
+
+  my $method = Mojo::RabbitMQ::Client::Method::Publish->new(
     client => $client,
     channel => $channel
   )->setup(
@@ -113,22 +113,22 @@ Mojo::RabbitMQ::Method::Publish - single class to do all of AMQP Publish method 
     mandatory   => 0,
     immediate   => 0,
   )->deliver();
-  
+
 =head1 DESCRIPTION
 
-L<Mojo::RabbitMQ::Method::Publish> is a special class to implement AMQP message publish workflow.
+L<Mojo::RabbitMQ::Client::Method::Publish> is a special class to implement AMQP message publish workflow.
 
 =head1 EVENTS
 
-L<Mojo::RabbitMQ::Method::Publish> inherits all events from L<Mojo::RabbitMQ::Method>.
+L<Mojo::RabbitMQ::Client::Method::Publish> inherits all events from L<Mojo::RabbitMQ::Client::Method>.
 
 =head1 ATTRIBUTES
 
-L<Mojo::RabbitMQ::Method::Publish> inherits all attributes from L<Mojo::RabbitMQ::Method>.
+L<Mojo::RabbitMQ:Client:::Method::Publish> inherits all attributes from L<Mojo::RabbitMQ::Client::Method>.
 
 =head1 METHODS
 
-L<Mojo::RabbitMQ::Method::Publish> inherits all methods from L<Mojo::RabbitMQ::Method> with
+L<Mojo::RabbitMQ::Client::Method::Publish> inherits all methods from L<Mojo::RabbitMQ::Client::Method> with
 following changes.
 
 =head2 setup
@@ -187,7 +187,7 @@ Only accepts common arguments for message publish chain. Which is:
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Method>, L<Mojo::RabbitMQ::Channel>, L<Mojo::RabbitMQ::Client>
+L<Mojo::RabbitMQ::Client::Method>, L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client>
 
 =head1 COPYRIGHT AND LICENSE
 

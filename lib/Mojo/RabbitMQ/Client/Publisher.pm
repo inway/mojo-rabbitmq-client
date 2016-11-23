@@ -1,4 +1,4 @@
-package Mojo::RabbitMQ::Publisher;
+package Mojo::RabbitMQ::Client::Publisher;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::RabbitMQ::Client;
 
@@ -28,7 +28,7 @@ sub publish {
       my $queue_name    = $query->param('queue');
 
       # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Channel->new();
+      my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
       $channel->catch(sub { die "Error on channel received" });
 
@@ -41,7 +41,7 @@ sub publish {
 
           if (ref($body) eq 'HASH') {
             $headers{content_type} = 'application/json';
-            $body = encode_json $task;
+            $body = encode_json $body;
           }
 
           my $publish = $channel->publish(
@@ -76,12 +76,12 @@ sub publish {
 
 =head1 NAME
 
-Mojo::RabbitMQ::Publisher - simple Mojo::RabbitMQ::Client based publisher
+Mojo::RabbitMQ::Client::Publisher - simple Mojo::RabbitMQ::Client based publisher
 
 =head1 SYNOPSIS
 
-  use Mojo::RabbitMQ::Publisher;
-  my $publisher = Mojo::RabbitMQ::Publisher->new(
+  use Mojo::RabbitMQ::Client::Publisher;
+  my $publisher = Mojo::RabbitMQ::Client::Publisher->new(
     url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
   );
 
@@ -97,16 +97,16 @@ Mojo::RabbitMQ::Publisher - simple Mojo::RabbitMQ::Client based publisher
 
 =head1 EVENTS
 
-L<Mojo::RabbitMQ::Publisher> inherits all events from L<Mojo::EventEmitter> and can emit the
+L<Mojo::RabbitMQ::Client::Publisher> inherits all events from L<Mojo::EventEmitter> and can emit the
 following new ones.
 
 =head1 ATTRIBUTES
 
-L<Mojo::RabbitMQ::Publisher> has following attributes.
+L<Mojo::RabbitMQ::Client::Publisher> has following attributes.
 
 =head1 METHODS
 
-L<Mojo::RabbitMQ::Publisher> inherits all methods from L<Mojo::EventEmitter> and implements
+L<Mojo::RabbitMQ::Client::Publisher> inherits all methods from L<Mojo::EventEmitter> and implements
 the following new ones.
 
 =head1 SEE ALSO

@@ -22,7 +22,7 @@ $amqp->on(
 
     pass('Protocol opened');
 
-    my $channel = Mojo::RabbitMQ::Channel->new();
+    my $channel = Mojo::RabbitMQ::Client::Channel->new();
     $channel->on(
       open => sub {
         my ($channel) = @_;

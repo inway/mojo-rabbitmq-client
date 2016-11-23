@@ -1,4 +1,4 @@
-package Mojo::RabbitMQ::Method;
+package Mojo::RabbitMQ::Client::Method;
 use Mojo::Base 'Mojo::EventEmitter';
 
 has is_sent   => 0;
@@ -38,13 +38,13 @@ sub deliver {
 
 =head1 NAME
 
-Mojo::RabbitMQ::Method - it's a generic class for all AMQP method calls
+Mojo::RabbitMQ::Client::Method - it's a generic class for all AMQP method calls
 
 =head1 SYNOPSIS
 
-  use Mojo::RabbitMQ::Method;
-  
-  my $method = Mojo::RabbitMQ::Method->new(
+  use Mojo::RabbitMQ::Client::Method;
+
+  my $method = Mojo::RabbitMQ::Client::Method->new(
     client => $client,
     channel => $channel
   )->setup(
@@ -53,20 +53,20 @@ Mojo::RabbitMQ::Method - it's a generic class for all AMQP method calls
     },
     ['Basic::ConsumeOk', ...]
   );
-  
+
   # Watch for errors
   $method->on(error => sub { warn "Error in reception: " . $_[1] });
-  
+
   # Send this frame to AMQP
   $method->deliver;
 
 =head1 DESCRIPTION
 
-L<Mojo::RabbitMQ::Method> is general class for every AMQP method call.
+L<Mojo::RabbitMQ::Client::Method> is general class for every AMQP method call.
 
 =head1 EVENTS
 
-L<Mojo::RabbitMQ::Method> inherits all events from L<Mojo::EventEmitter> and can emit the
+L<Mojo::RabbitMQ::Client::Method> inherits all events from L<Mojo::EventEmitter> and can emit the
 following new ones.
 
 =head2 success
@@ -88,7 +88,7 @@ Can be emmited by get method, when no messages are available on queue.
 
 =head1 ATTRIBUTES
 
-L<Mojo::RabbitMQ::Method> has following attributes.
+L<Mojo::RabbitMQ::Client::Method> has following attributes.
 
 =head2 is_sent
 
@@ -116,7 +116,7 @@ L<Mojo::RabbitMQ::Method> has following attributes.
 
 =head1 METHODS
 
-L<Mojo::RabbitMQ::Method> inherits all methods from L<Mojo::EventEmitter> and implements
+L<Mojo::RabbitMQ::Client::Method> inherits all methods from L<Mojo::EventEmitter> and implements
 the following new ones.
 
 =head2 setup
@@ -128,14 +128,14 @@ Sets AMQP method name, its arguments and expected replies.
 =head2 deliver
 
   my $status = $method->deliver();
-  
+
   This delivers AMQP method call to server. Returns C<<false>> when channel is not open, C<<true>> otherwise.
   On successful delivery->reply cycle emits C<<success>> event.
   C<<error>> is emitted when none of expected replies are received.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Channel>, L<Mojo::RabbitMQ::Client>
+L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client>
 
 =head1 COPYRIGHT AND LICENSE
 

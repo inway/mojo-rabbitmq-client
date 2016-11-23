@@ -1,16 +1,16 @@
-package Mojo::RabbitMQ::Channel;
+package Mojo::RabbitMQ::Client::Channel;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Mojo::RabbitMQ::LocalQueue;
-use Mojo::RabbitMQ::Method;
-use Mojo::RabbitMQ::Method::Publish;
+use Mojo::RabbitMQ::Client::LocalQueue;
+use Mojo::RabbitMQ::Client::Method;
+use Mojo::RabbitMQ::Client::Method::Publish;
 
 has id            => 0;
 has is_open       => 0;
 has is_active     => 0;
 has client        => undef;
-has queue         => sub { Mojo::RabbitMQ::LocalQueue->new };
-has content_queue => sub { Mojo::RabbitMQ::LocalQueue->new };
+has queue         => sub { Mojo::RabbitMQ::Client::LocalQueue->new };
+has content_queue => sub { Mojo::RabbitMQ::Client::LocalQueue->new };
 has consumer_cbs  => sub { {} };
 has return_cbs    => sub { {} };
 
@@ -173,7 +173,7 @@ sub _assert_open {
 sub _prepare_method {
   my $self = shift;
 
-  return Mojo::RabbitMQ::Method->new(client => $self->client, channel => $self)
+  return Mojo::RabbitMQ::Client::Method->new(client => $self->client, channel => $self)
     ->setup(@_);
 }
 
@@ -284,7 +284,7 @@ sub delete_queue {
 sub publish {
   my $self = shift;
 
-  return Mojo::RabbitMQ::Method::Publish->new(
+  return Mojo::RabbitMQ::Client::Method::Publish->new(
     client  => $self->client,
     channel => $self
   )->setup(@_);
@@ -493,13 +493,13 @@ sub DESTROY {
 
 =head1 NAME
 
-Mojo::RabbitMQ::Channel - handles all channel related methods
+Mojo::RabbitMQ::Client::Channel - handles all channel related methods
 
 =head1 SYNOPSIS
 
-  use Mojo::RabbitMQ::Channel;
+  use Mojo::RabbitMQ::Client::Channel;
 
-  my $channel = Mojo::RabbitMQ::Channel->new();
+  my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
   $channel->catch(sub { warn "Some channel error occured: " . $_[1] });
 
@@ -515,11 +515,11 @@ Mojo::RabbitMQ::Channel - handles all channel related methods
 
 =head1 DESCRIPTION
 
-L<Mojo::RabbitMQ::Channel> allows to call all channel related methods.
+L<Mojo::RabbitMQ::Client::Channel> allows to call all channel related methods.
 
 =head1 EVENTS
 
-L<Mojo::RabbitMQ::Channel> inherits all events from L<Mojo::EventEmitter> and can emit the
+L<Mojo::RabbitMQ::Client::Channel> inherits all events from L<Mojo::EventEmitter> and can emit the
 following new ones.
 
 =head2 open
@@ -542,7 +542,7 @@ Emitted when channel gets closed, C<<$frame>> contains close reason.
 
 =head1 ATTRIBUTES
 
-L<Mojo::RabbitMQ::Channel> has following attributes.
+L<Mojo::RabbitMQ::Client::Channel> has following attributes.
 
 =head2 id
 
@@ -568,7 +568,7 @@ This can be modified on reception of Channel-Flow.
 
 =head1 METHODS
 
-L<Mojo::RabbitMQ::Channel> inherits all methods from L<Mojo::EventEmitter> and implements
+L<Mojo::RabbitMQ::Client::Channel> inherits all methods from L<Mojo::EventEmitter> and implements
 the following new ones.
 
 =head2 close
@@ -1150,7 +1150,7 @@ call should be issued.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Method>, L<Net::AMQP::Protocol::v0_8>
+L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Client::Method>, L<Net::AMQP::Protocol::v0_8>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -11,10 +11,12 @@ use File::Spec::Functions qw(catdir);
 use Net::AMQP;
 use Net::AMQP::Common qw(:all);
 
-use Mojo::RabbitMQ::Channel;
-use Mojo::RabbitMQ::LocalQueue;
+use Mojo::RabbitMQ::Client::Channel;
+use Mojo::RabbitMQ::Client::Consumer;
+use Mojo::RabbitMQ::Client::LocalQueue;
+use Mojo::RabbitMQ::Client::Publisher;
 
-our $VERSION = "0.0.2";
+our $VERSION = "0.0.4";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
@@ -26,7 +28,7 @@ has heartbeat_received => 0;    # When did we receive last heartbeat
 has heartbeat_sent     => 0;    # When did we sent last heartbeat
 has ioloop          => sub { Mojo::IOLoop->singleton };
 has max_buffer_size => 16384;
-has queue    => sub { Mojo::RabbitMQ::LocalQueue->new };
+has queue    => sub { Mojo::RabbitMQ::Client::LocalQueue->new };
 has channels => sub { {} };
 has stream_id   => undef;
 has login_user  => '';
@@ -42,6 +44,20 @@ sub connect {
   $self->stream_id($id);
 
   return $id;
+}
+
+sub consumer {
+  my ($class, @params) = @_;
+  croak "consumer is a static method" if ref $class;
+
+  return Mojo::RabbitMQ::Client::Consumer->new(@params);
+}
+
+sub publisher {
+  my ($class, @params) = @_;
+  croak "publisher is a static method" if ref $class;
+
+  return Mojo::RabbitMQ::Client::Publisher->new(@params);
 }
 
 sub add_channel {
@@ -479,7 +495,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       my ($client) = @_;
 
       # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Channel->new();
+      my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
       $channel->catch(sub { warn "Error on channel received"; });
 
@@ -594,7 +610,7 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
 =head2 open_channel
 
-  my $channel = Mojo::RabbitMQ::Channel->new();
+  my $channel = Mojo::RabbitMQ::Client::Channel->new();
   ...
   $client->open_channel($channel);
 
@@ -604,7 +620,7 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Channel>
+L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client::Consumer>, L<Mojo::RabbitMQ::Client::Publisher>
 
 =head1 COPYRIGHT AND LICENSE
 
