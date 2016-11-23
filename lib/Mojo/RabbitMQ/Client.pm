@@ -276,7 +276,7 @@ sub _connected {
     # Original spec is in "fixed_amqp0-8.xml"
     my $home  = Mojo::Home->new();
     my $share = $home->parse($self->_rabbitmq_lib_dir)
-      ->rel_dir('RabbitMQ/share/' . $file);
+      ->rel_dir('RabbitMQ/Client/share/' . $file);
     Net::AMQP::Protocol->load_xml_spec($share);
   }
 
