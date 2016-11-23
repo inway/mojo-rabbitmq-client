@@ -1,6 +1,9 @@
 
 {{$NEXT}}
 
+0.0.5  2016-11-23
+  - First Minilla release
+  - Drop support for Module::Install
 0.0.4  2016-11-23
   - Moved all utility packages to Mojo::RabbitMQ::Client::* namespace
   - Added shorthand static methods for consumer & publisher
