@@ -6,7 +6,7 @@ use Mojo::Home;
 use Mojo::IOLoop;
 use List::MoreUtils qw(none);
 use File::Basename 'dirname';
-use File::Spec::Functions qw(catdir);
+use File::ShareDir qw(dist_file);
 
 use Net::AMQP;
 use Net::AMQP::Common qw(:all);
@@ -257,8 +257,6 @@ sub _connect {
   );
 }
 
-sub _rabbitmq_lib_dir { catdir dirname(__FILE__), '..' }
-
 sub _connected {
   my ($self, $id, $query) = @_;
 
@@ -274,9 +272,7 @@ sub _connected {
     my $file = "amqp0-9-1.stripped.extended.xml";
 
     # Original spec is in "fixed_amqp0-8.xml"
-    my $home  = Mojo::Home->new();
-    my $share = $home->parse($self->_rabbitmq_lib_dir)
-      ->rel_dir('RabbitMQ/Client/share/' . $file);
+    my $share = dist_file('Mojo-RabbitMQ-Client', $file);
     Net::AMQP::Protocol->load_xml_spec($share);
   }
 

@@ -42,6 +42,7 @@
       },
       "runtime" : {
          "requires" : {
+            "File::ShareDir" : "0",
             "Mojolicious" : "6.10",
             "Net::AMQP" : "0.06",
             "perl" : "5.008001"
