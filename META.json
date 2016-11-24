@@ -67,7 +67,7 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.0.5",
+   "version" : "0.0.6",
    "x_contributors" : [
       "Vidar Tyldum <vidar@tyldum.com>",
       "Sebastian Podjasek <sebastian@podjasek.pl>"
