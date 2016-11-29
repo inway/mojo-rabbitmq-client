@@ -1,4 +1,4 @@
-package Mojo::RabbitMQ::Consumer;
+package Mojo::RabbitMQ::Client::Consumer;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::RabbitMQ::Client;
 
@@ -15,7 +15,7 @@ sub start {
   $self->client($client);
 
   # Catch all client related errors
-  $client->catch(sub { warn "Some error caught in client"; $client->stop });
+  $client->catch(sub { die "Some error caught in client" });
 
   # When connection is in Open state, open new channel
   $client->on(
@@ -26,9 +26,9 @@ sub start {
       my $queue_name    = $query->param('queue');
 
       # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Channel->new();
+      my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
-      $channel->catch(sub { warn "Error on channel received"; $client->stop });
+      $channel->catch(sub { die "Error on channel received" });
 
       $channel->on(
         open => sub {
@@ -74,7 +74,7 @@ sub start {
 
         }
       );
-      $channel->on(close => sub { say 'Channel closed' });
+      $channel->on(close => sub { warn 'Channel closed' });
 
       $client->open_channel($channel);
     }
@@ -82,14 +82,64 @@ sub start {
 
   # Start connection
   $client->connect;
-
-  # Start Mojo::IOLoop if not running already
-  $client->_loop->start unless $client->_loop->is_running;
-}
-
-sub stop {
-  my $self = shift;
-  $self->client->_loop->stop if $self->client->_loop->is_running;
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Mojo::RabbitMQ::Client::Consumer - simple Mojo::RabbitMQ::Client based consumer
+
+=head1 SYNOPSIS
+
+  use Mojo::RabbitMQ::Client::Consumer;
+  my $consumer = Mojo::RabbitMQ::Consumer->new(
+    url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+    defaults => {
+      qos      => {prefetch_count => 1},
+      queue    => {durable        => 1},
+      consumer => {no_ack         => 0},
+    }
+  );
+
+  $consumer->catch(sub { die "Some error caught in Consumer" } );
+  $consumer->on('success' => sub { say "Consumer ready" });
+  $consumer->on(
+    'message' => sub {
+      my ($consumer, $message) = @_;
+
+      $consumer->channel->ack($message)->deliver;
+    }
+  );
+
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
+=head1 DESCRIPTION
+
+=head1 EVENTS
+
+L<Mojo::RabbitMQ::Client::Consumer> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head1 ATTRIBUTES
+
+L<Mojo::RabbitMQ::Client::Consumer> has following attributes.
+
+=head1 METHODS
+
+L<Mojo::RabbitMQ::Client::Consumer> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
+
+=head1 SEE ALSO
+
+L<Mojo::RabbitMQ::Client>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2015-2016, Sebastian Podjasek and others
+
+This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
+
+=cut

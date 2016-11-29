@@ -1,4 +1,4 @@
-package Mojo::RabbitMQ::LocalQueue;
+package Mojo::RabbitMQ::Client::LocalQueue;
 use Mojo::Base -base;
 
 has message_queue    => sub { [] };
@@ -40,30 +40,30 @@ sub _drain_queue {
 
 =head1 NAME
 
-Mojo::RabbitMQ::LocalQueue - Callback queue
+Mojo::RabbitMQ::Client::LocalQueue - Callback queue
 
 =head1 SYNOPSIS
 
-  use Mojo::RabbitMQ::LocalQueue
-  
-  my $queue = Mojo::RabbitMQ::LocalQueue->new();
-  
+  use Mojo::RabbitMQ::Client::LocalQueue
+
+  my $queue = Mojo::RabbitMQ::Client::LocalQueue->new();
+
   # Register callback when content appears
   $queue->get(sub { say "got expected content: " . $_[0] });
-  
+
   # Push some content to consume
   $queue->push("It Works!");
-  
+
   # This prints:
   # got expected content: It Works!
 
 =head1 DESCRIPTION
 
-L<Mojo::RabbitMQ::LocalQueue> is a queue for callbacks expecting some content to be received.
+L<Mojo::RabbitMQ::Client::LocalQueue> is a queue for callbacks expecting some content to be received.
 
 =head1 METHODS
 
-L<Mojo::RabbitMQ::LocalQueue> implements following methods:
+L<Mojo::RabbitMQ::Client::LocalQueue> implements following methods:
 
 =head2 get
 
@@ -80,7 +80,7 @@ Pushes content to queue and also drains all declared callbacks.
 
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Channel>
+L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Client::Channel>
 
 =head1 COPYRIGHT AND LICENSE
 

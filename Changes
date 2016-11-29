@@ -1,3 +1,21 @@
+{{$NEXT}}
 
+0.0.6 2016-11-24T00:45:01Z
+  - First CPAN release
+0.0.5  2016-11-23
+  - First Minilla release
+  - Drop support for Module::Install
+0.0.4  2016-11-23
+  - Moved all utility packages to Mojo::RabbitMQ::Client::* namespace
+  - Added shorthand static methods for consumer & publisher
+0.0.3  2016-11-18
+  - Draft specs for new Publisher API
+0.0.2  2016-10-25
+  - Change the way how channels are opened
+  - Deprecate _open method for channels
+  - Show proper project url in client_properties
+  - Support connect url according to spec
+  - Include Module::Install for cleaner use in Docker containers
+  - Docs updates & cleanups
 0.0.1  2015-06-29
   - Initial release. Most things work.

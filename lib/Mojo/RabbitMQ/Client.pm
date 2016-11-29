@@ -6,15 +6,17 @@ use Mojo::Home;
 use Mojo::IOLoop;
 use List::MoreUtils qw(none);
 use File::Basename 'dirname';
-use File::Spec::Functions qw(catdir);
+use File::ShareDir qw(dist_file);
 
 use Net::AMQP;
 use Net::AMQP::Common qw(:all);
 
-use Mojo::RabbitMQ::Channel;
-use Mojo::RabbitMQ::LocalQueue;
+use Mojo::RabbitMQ::Client::Channel;
+use Mojo::RabbitMQ::Client::Consumer;
+use Mojo::RabbitMQ::Client::LocalQueue;
+use Mojo::RabbitMQ::Client::Publisher;
 
-our $VERSION = "0.0.2";
+our $VERSION = "0.0.6";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
@@ -26,7 +28,7 @@ has heartbeat_received => 0;    # When did we receive last heartbeat
 has heartbeat_sent     => 0;    # When did we sent last heartbeat
 has ioloop          => sub { Mojo::IOLoop->singleton };
 has max_buffer_size => 16384;
-has queue    => sub { Mojo::RabbitMQ::LocalQueue->new };
+has queue    => sub { Mojo::RabbitMQ::Client::LocalQueue->new };
 has channels => sub { {} };
 has stream_id   => undef;
 has login_user  => '';
@@ -42,6 +44,20 @@ sub connect {
   $self->stream_id($id);
 
   return $id;
+}
+
+sub consumer {
+  my ($class, @params) = @_;
+  croak "consumer is a static method" if ref $class;
+
+  return Mojo::RabbitMQ::Client::Consumer->new(@params);
+}
+
+sub publisher {
+  my ($class, @params) = @_;
+  croak "publisher is a static method" if ref $class;
+
+  return Mojo::RabbitMQ::Client::Publisher->new(@params);
 }
 
 sub add_channel {
@@ -101,22 +117,6 @@ sub close {
       $self->_close;
     }
   );
-}
-
-sub start {
-  $_[0]->_loop->start unless $_[0]->_loop->is_running;
-}
-
-sub stop {
-  $_[0]->_loop->stop if $_[0]->_loop->is_running;
-}
-
-sub timer {
-  shift->_loop->timer(@_);
-}
-
-sub recurring {
-  shift->_loop->recurring(@_);
 }
 
 sub _loop { $_[0]->ioloop }
@@ -257,8 +257,6 @@ sub _connect {
   );
 }
 
-sub _rabbitmq_lib_dir { catdir dirname(__FILE__), '..' }
-
 sub _connected {
   my ($self, $id, $query) = @_;
 
@@ -274,9 +272,7 @@ sub _connected {
     my $file = "amqp0-9-1.stripped.extended.xml";
 
     # Original spec is in "fixed_amqp0-8.xml"
-    my $home  = Mojo::Home->new();
-    my $share = $home->parse($self->_rabbitmq_lib_dir)
-      ->rel_dir('RabbitMQ/share/' . $file);
+    my $share = dist_file('Mojo-RabbitMQ-Client', $file);
     Net::AMQP::Protocol->load_xml_spec($share);
   }
 
@@ -351,7 +347,7 @@ sub _tune {
  # -and-
  # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
  # heartbeats, the peer is considered to be unreachable.
-      $self->_loop->recurring(
+      $self->{heartbeat_tid} = $self->_loop->recurring(
         $heartbeat / 2 => sub {
           return unless time() - $self->heartbeat_sent > $heartbeat / 2;
           $self->_write_frame(Net::AMQP::Frame::Heartbeat->new());
@@ -462,6 +458,14 @@ sub _write {
     if defined $self->_loop->stream($id);
 }
 
+sub DESTROY {
+    my $self = shift;
+    my $ioloop = $self->ioloop or return;
+    my $heartbeat_tid = $self->{heartbeat_tid};
+
+    $ioloop->remove($heartbeat_tid) if $heartbeat_tid;
+}
+
 1;
 
 =encoding utf8
@@ -474,11 +478,12 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   use Mojo::RabbitMQ::Client;
 
+  # Supply URL according to (https://www.rabbitmq.com/uri-spec.html)
   my $client = Mojo::RabbitMQ::Client->new(
-    url => 'rabbitmq://guest:guest@127.0.0.1:5672/');
+    url => 'amqp://guest:guest@127.0.0.1:5672/');
 
   # Catch all client related errors
-  $client->catch(sub { warn "Some error caught in client"; $client->stop });
+  $client->catch(sub { warn "Some error caught in client"; });
 
   # When connection is in Open state, open new channel
   $client->on(
@@ -486,9 +491,9 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       my ($client) = @_;
 
       # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Channel->new();
+      my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
-      $channel->catch(sub { warn "Error on channel received"; $client->stop });
+      $channel->catch(sub { warn "Error on channel received"; });
 
       $channel->on(
         open => sub {
@@ -523,7 +528,46 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
   $client->connect();
 
   # Start Mojo::IOLoop if not running already
-  $client->start();
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
+=head2 CONSUMER
+
+  use Mojo::RabbitMQ::Client;
+  my $consumer = Mojo::RabbitMQ::Client->consumer(
+    url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+    defaults => {
+      qos      => {prefetch_count => 1},
+      queue    => {durable        => 1},
+      consumer => {no_ack         => 0},
+    }
+  );
+
+  $consumer->catch(sub { die "Some error caught in Consumer" } );
+  $consumer->on('success' => sub { say "Consumer ready" });
+  $consumer->on(
+    'message' => sub {
+      my ($consumer, $message) = @_;
+
+      $consumer->channel->ack($message)->deliver;
+    }
+  );
+
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+
+=head2 PUBLISHER
+
+  use Mojo::RabbitMQ::Client;
+  my $publisher = Mojo::RabbitMQ::Client->publisher(
+    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
+  );
+
+  $publisher->catch(sub { die "Some error caught in Publisher" } );
+  $publisher->on('success' => sub { say "Publisher ready" });
+
+  $publisher->publish('plain text');
+  $publisher->publish({encode => { to => 'json'}});
+
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head1 DESCRIPTION
 
@@ -601,7 +645,7 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
 =head2 open_channel
 
-  my $channel = Mojo::RabbitMQ::Channel->new();
+  my $channel = Mojo::RabbitMQ::Client::Channel->new();
   ...
   $client->open_channel($channel);
 
@@ -609,29 +653,13 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
   my $removed = $client->delete_channel($channel->id);
 
-=head2 start
-
-  $client->start();
-
-=head2 stop
-
-  $client->stop();
-
-=head2 timer
-
-  $client->timer(10 => sub { ... });
-
-=head2 recurring
-
-  $client->recurring(5 => sub { ... });
-
 =head1 SEE ALSO
 
-L<Mojo::RabbitMQ::Channel>
+L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client::Consumer>, L<Mojo::RabbitMQ::Client::Publisher>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2015, Sebastian Podjasek
+Copyright (C) 2015-2016, Sebastian Podjasek and others
 
 Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
 

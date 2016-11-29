@@ -1,0 +1,5 @@
+name = "Mojo-RabbitMQ-Client"
+license = 'artistic_2'
+badges = ["travis","metacpan"]
+module_maker="ModuleBuildTiny"
+

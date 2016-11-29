@@ -1,8 +1,8 @@
 use Test::More tests => 10;
 
-use Mojo::RabbitMQ::LocalQueue;
+use Mojo::RabbitMQ::Client::LocalQueue;
 
-my $q = Mojo::RabbitMQ::LocalQueue->new;
+my $q = Mojo::RabbitMQ::Client::LocalQueue->new;
 
 $q->push(1);
 $q->get(sub {is $_[0], 1, 'push -> get';});
@@ -31,4 +31,3 @@ $q->get(
 );
 $q->push(7, 8);
 $q->push(9, 10);
-
