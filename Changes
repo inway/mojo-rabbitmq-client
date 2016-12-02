@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.0.7 2016-12-02T20:52:17Z
+  - Fix missing dependencies
 0.0.6 2016-11-24T00:45:01Z
   - First CPAN release
 0.0.5  2016-11-23
