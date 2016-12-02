@@ -43,6 +43,7 @@
       "runtime" : {
          "requires" : {
             "File::ShareDir" : "0",
+            "List::MoreUtils" : "0",
             "Mojolicious" : "6.10",
             "Net::AMQP" : "0.06",
             "perl" : "5.008001"
@@ -67,7 +68,7 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.0.6",
+   "version" : "0.0.7",
    "x_contributors" : [
       "Vidar Tyldum <vidar@tyldum.com>",
       "Sebastian Podjasek <sebastian@podjasek.pl>"
