@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.0.8 2017-01-30T12:13:18Z
   - Fix issues with UTF-8 data corruption on SSL sockets PR#7
   - Drop List::MoreUtils `none` in favour of core List::Util PR#4
 0.0.7 2016-12-02T20:52:17Z

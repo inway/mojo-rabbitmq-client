@@ -43,10 +43,10 @@
       "runtime" : {
          "requires" : {
             "File::ShareDir" : "0",
-            "List::MoreUtils" : "0",
+            "List::Util" : "1.33",
             "Mojolicious" : "6.10",
             "Net::AMQP" : "0.06",
-            "perl" : "5.008001"
+            "perl" : "5.010"
          }
       },
       "test" : {
@@ -68,9 +68,10 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.0.7",
+   "version" : "0.0.8",
    "x_contributors" : [
       "Vidar Tyldum <vidar@tyldum.com>",
+      "Stephan Kulow <coolo@suse.de>",
       "Sebastian Podjasek <sebastian@podjasek.pl>"
    ],
    "x_serialization_backend" : "JSON::PP version 2.27300"
