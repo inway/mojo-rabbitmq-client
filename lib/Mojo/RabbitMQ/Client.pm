@@ -4,7 +4,7 @@ use Carp qw(croak confess);
 use Mojo::URL;
 use Mojo::Home;
 use Mojo::IOLoop;
-use List::MoreUtils qw(none);
+use List::Util qw(none);
 use File::Basename 'dirname';
 use File::ShareDir qw(dist_file);
 
