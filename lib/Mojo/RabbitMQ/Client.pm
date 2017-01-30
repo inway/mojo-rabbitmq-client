@@ -454,6 +454,7 @@ sub _write {
   my $id    = shift @_;
   my $frame = shift @_;
 
+  utf8::downgrade($frame);
   $self->_loop->stream($id)->write($frame)
     if defined $self->_loop->stream($id);
 }
