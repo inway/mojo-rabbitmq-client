@@ -80,11 +80,11 @@ Emitted when one of expected replies is received.
 
 =head2 message
 
-Can be emmited by consumption & get methods.
+Can be emitted by consumption & get methods.
 
 =head2 empty
 
-Can be emmited by get method, when no messages are available on queue.
+Can be emitted by get method, when no messages are available on queue.
 
 =head1 ATTRIBUTES
 
