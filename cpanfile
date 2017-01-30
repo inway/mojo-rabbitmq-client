@@ -1,4 +1,4 @@
-requires 'perl', '5.008001';
+requires 'perl', '5.010';
 requires 'Mojolicious', '6.10';
 requires 'Net::AMQP', '0.06';
 requires 'File::ShareDir';
