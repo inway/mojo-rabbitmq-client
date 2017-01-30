@@ -12,3 +12,4 @@
 -bt=2    # High brace tightness
 -sbt=2   # High square bracket tightness
 -isbc    # Don't indent comments without leading space
+-utf8    # assume UTF-8 source #supported @2015 08 15
