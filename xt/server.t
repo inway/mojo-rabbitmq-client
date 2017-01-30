@@ -1,7 +1,17 @@
 use Test::More tests => 12;
-use Test::Exception;
 
 BEGIN { use_ok 'Mojo::RabbitMQ::Client' }
+
+sub failure {
+  my ($test, $details) = @_;
+  fail($test);
+  diag("Details: " . $details) if $details;
+  Mojo::IOLoop->stop;
+}
+
+my $run_id        = time();
+my $exchange_name = 'mrc_test_' . $run_id;
+my $queue_name    = 'mrc_test_queue' . $run_id;
 
 my $amqp
   = Mojo::RabbitMQ::Client->new(
@@ -10,11 +20,11 @@ my $amqp
 
 $amqp->ioloop->timer(    # Global test timeout
   10 => sub {
-    $amqp->ioloop->stop;
+    failure('Test timeout');
   }
 );
 
-$amqp->catch(sub { fail('Connection or other server errors'); $amqp->ioloop->stop; });
+$amqp->catch(sub { failure('Connection or other server errors') });
 $amqp->on(connect => sub { pass('Connected to server') });
 $amqp->on(
   open => sub {
@@ -30,77 +40,51 @@ $amqp->on(
         pass('Channel opened');
 
         my $exchange = $channel->declare_exchange(
-          exchange    => 'test',
+          exchange    => $exchange_name,
           type        => 'topic',
           auto_delete => 1,
         );
-        $exchange->catch(
-          sub {
-            fail('Failed to declare exchange');
-            $amqp->ioloop->stop;
-          }
-        );
+        $exchange->catch(sub { failure('Failed to declare exchange') });
         $exchange->on(
           success => sub {
             pass('Exchange declared');
 
-            my $queue = $channel->declare_queue(
-              queue       => 'test_queue',
-              auto_delete => 1,
-            );
-            $queue->catch(
-              sub {
-                fail('Failed to declare queue');
-                $amqp->ioloop->stop;
-              }
-            );
+            my $queue = $channel->declare_queue(queue => $queue_name,
+              auto_delete => 1,);
+            $queue->catch(sub { failure('Failed to declare queue') });
             $queue->on(
               success => sub {
                 pass('Queue declared');
 
                 my $bind = $channel->bind_queue(
-                  exchange    => 'test',
-                  queue       => 'test_queue',
-                  routing_key => 'test_queue',
+                  exchange    => $exchange_name,
+                  queue       => $queue_name,
+                  routing_key => $queue_name,
                 );
-                $bind->catch(
-                  sub {
-                    fail('Failed to bind queue');
-                    $amqp->ioloop->stop;
-                  }
-                );
+                $bind->catch(sub { failure('Failed to bind queue') });
                 $bind->on(
                   success => sub {
                     pass('Queue bound');
 
                     my $publish = $channel->publish(
-                      exchange    => 'test',
-                      routing_key => 'test_queue',
+                      exchange    => $exchange_name,
+                      routing_key => $queue_name,
                       body        => 'Test message',
                       mandatory   => 0,
                       immediate   => 0,
                       header      => {}
                     );
-                    $publish->catch(
-                      sub {
-                        fail('Message not published');
-                        $amqp->ioloop->stop;
-                      }
-                    );
+                    $publish->catch(sub { failure('Message not published') });
                     $publish->on(
                       success => sub {
                         pass('Message published');
                       }
                     );
-                    $publish->on(
-                      return => sub {
-                        fail('Message returned');
-                        $amqp->ioloop->stop;
-                      }
+                    $publish->on(return => sub { failure('Message returned') }
                     );
                     $publish->deliver();
 
-                    my $consumer = $channel->consume(queue => 'test_queue',);
+                    my $consumer = $channel->consume(queue => $queue_name,);
                     $consumer->on(
                       success => sub {
                         pass('Subscribed to queue');
@@ -112,12 +96,7 @@ $amqp->on(
                         $amqp->close;
                       }
                     );
-                    $consumer->catch(
-                      sub {
-                        fail('Subscription failed');
-                        $amqp->ioloop->stop;
-                      }
-                    );
+                    $consumer->catch(sub { failure('Subscription failed') });
                     $consumer->deliver;
                   }
                 );
@@ -130,14 +109,15 @@ $amqp->on(
         $exchange->deliver();
       }
     );
-    $channel->on(close => sub { fail('Channel closed'); $amqp->ioloop->stop; });
-    $channel->catch(sub { fail('Channel not opened'); $amqp->ioloop->stop; });
+    $channel->on(close =>
+        sub { failure('Channel closed', $_[1]->method_frame->reply_text) });
+    $channel->catch(sub { failure('Channel not opened') });
 
     $self->open_channel($channel);
   }
 );
-$amqp->on(close => sub { pass('Connection closed'); });
-$amqp->on(disconnect => sub { pass('Disconnected'); $amqp->ioloop->stop; });
+$amqp->on(close => sub { pass('Connection closed') });
+$amqp->on(disconnect => sub { pass('Disconnected'); Mojo::IOLoop->stop });
 $amqp->connect();
 
-$amqp->ioloop->start;
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
