@@ -25,6 +25,8 @@ sub start {
       my $exchange_name = $query->param('exchange');
       my $queue_name    = $query->param('queue');
 
+      $self->emit('connect');
+
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
@@ -74,14 +76,24 @@ sub start {
 
         }
       );
-      $channel->on(close => sub { warn 'Channel closed' });
+      $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
 
       $client->open_channel($channel);
     }
   );
 
+  $client->on('close' => sub { shift; $self->emit('close', @_) });
+
   # Start connection
   $client->connect;
+}
+
+sub close {
+  my $self = shift;
+
+  if ($self->client) {
+    $self->client->close();
+  }
 }
 
 1;
