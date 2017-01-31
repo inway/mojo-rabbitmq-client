@@ -660,7 +660,7 @@ L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client::Consumer>, L<Mojo:
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2015-2016, Sebastian Podjasek and others
+Copyright (C) 2015-2017, Sebastian Podjasek and others
 
 Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
 

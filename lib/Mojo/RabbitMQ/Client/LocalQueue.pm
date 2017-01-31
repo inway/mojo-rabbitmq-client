@@ -84,7 +84,7 @@ L<Mojo::RabbitMQ::Client>, L<Mojo::RabbitMQ::Client::Channel>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2015, Sebastian Podjasek
+Copyright (C) 2015-2017, Sebastian Podjasek and others
 
 Based on L<AnyEvent::RabbitMQ::LocalQueue> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
 
