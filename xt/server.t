@@ -111,7 +111,7 @@ $amqp->on(
     );
     $channel->on(close =>
         sub { failure('Channel closed', $_[1]->method_frame->reply_text) });
-    $channel->catch(sub { failure('Channel not opened') });
+    $channel->catch(sub { failure('Channel error') });
 
     $self->open_channel($channel);
   }

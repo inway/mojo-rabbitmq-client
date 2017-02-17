@@ -561,6 +561,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
       $consumer->channel->ack($message)->deliver;
     }
   );
+  $consumer->start();
 
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
