@@ -355,9 +355,18 @@ sub _tune {
         }
       ) if $heartbeat;
 
+      # virtual host is in URL after the last /
+      # amqp://myuser:mypassword@ipadress:5672/myvirtualhostname
+      my $virtual_host = $self->url->path;
+      # The virtualhostname must be _without_ a / in the beginning
+      # in RabbitMQ 3.3.5. A virtual host with starting / receives a "connection refused"
+      if ($virtual_host ne '/') {
+        $virtual_host =~ s#^/##;
+      }
+
       $self->_write_expect(
         'Connection::Open' =>
-          {virtual_host => $self->url->path, capabilities => '', insist => 1,},
+          {virtual_host => $virtual_host, capabilities => '', insist => 1,},
         'Connection::OpenOk' => sub {
           $self->is_open(1);
           $self->emit('open');
