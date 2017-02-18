@@ -1,5 +1,9 @@
 {{$NEXT}}
-
+  - Proper implementation of URI parser PR#8 & #9
+  - Support for query parameter with aliases
+  - Add max_channels attribute to force maximum number of channels active
+  - Additional developer test for quick consumer
+  - Documentation changes
 0.0.8 2017-01-30T12:13:18Z
   - Fix issues with UTF-8 data corruption on SSL sockets PR#7
   - Drop List::MoreUtils `none` in favour of core List::Util PR#4

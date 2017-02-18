@@ -4,7 +4,10 @@ use Carp qw(croak confess);
 use Mojo::URL;
 use Mojo::Home;
 use Mojo::IOLoop;
+use Mojo::Parameters;
+use Mojo::Util qw(url_unescape);
 use List::Util qw(none);
+use Scalar::Util qw(blessed);
 use File::Basename 'dirname';
 use File::ShareDir qw(dist_file);
 
@@ -20,27 +23,32 @@ our $VERSION = "0.0.8";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
-has is_open           => 0;
-has url               => undef;
+has is_open => 0;
+has url     => undef;
+has tls     => sub { shift->_uri_handler('tls') };
+has user    => sub { shift->_uri_handler('user') };
+has pass    => sub { shift->_uri_handler('pass') };
+has host    => sub { shift->_uri_handler('host') };
+has port    => sub { shift->_uri_handler('port') };
+has vhost   => sub { shift->_uri_handler('vhost') };
+has params  => sub { shift->_uri_handler('params') // Mojo::Parameters->new };
 has connect_timeout   => sub { $ENV{MOJO_CONNECT_TIMEOUT} // 10 };
 has heartbeat_timeout => 60;
 has heartbeat_received => 0;    # When did we receive last heartbeat
 has heartbeat_sent     => 0;    # When did we sent last heartbeat
 has ioloop          => sub { Mojo::IOLoop->singleton };
 has max_buffer_size => 16384;
+has max_channels    => 0;
 has queue    => sub { Mojo::RabbitMQ::Client::LocalQueue->new };
 has channels => sub { {} };
-has stream_id   => undef;
-has login_user  => '';
+has stream_id => undef;
 
 sub connect {
   my $self = shift;
   $self->{buffer} = '';
 
-  $self->url(Mojo::URL->new($self->url));
-
   my $id;
-  $id = $self->_connect($self->url, sub { $self->_connected($id, @_) });
+  $id = $self->_connect(sub { $self->_connected($id, @_) });
   $self->stream_id($id);
 
   return $id;
@@ -60,6 +68,12 @@ sub publisher {
   return Mojo::RabbitMQ::Client::Publisher->new(@params);
 }
 
+sub param {
+  my $self = shift;
+  return undef unless defined $self->params;
+  return $self->params->param(@_);
+}
+
 sub add_channel {
   my $self    = shift;
   my $channel = shift;
@@ -68,6 +82,12 @@ sub add_channel {
   if ($id and $self->channels->{$id}) {
     return $channel->emit(
       error => 'Channel with id: ' . $id . ' already defined');
+  }
+
+  if ($self->max_channels > 0
+    and scalar keys %{$self->channels} >= $self->max_channels)
+  {
+    return $channel->emit(error => 'Maximum number of channels reached');
   }
 
   if (not $id) {
@@ -125,6 +145,78 @@ sub _error {
   my ($self, $id, $err) = @_;
 
   $self->emit(error => $err);
+}
+
+sub _uri_handler {
+  my $self = shift;
+  my $attr = shift;
+
+  return undef unless defined $self->url;
+
+  $self->url(Mojo::URL->new($self->url))
+    unless blessed $self->url && $self->url->isa('Mojo::URL');
+
+  # Set some defaults
+  my %defaults = (
+    tls    => 0,
+    user   => undef,
+    pass   => undef,
+    host   => 'localhost',
+    port   => 5672,
+    vhost  => '/',
+    params => undef
+  );
+
+  # Check secure scheme in url
+  $defaults{tls} = 1
+    if $self->url->scheme
+    =~ /^(amqp|rabbitmq)s$/;    # Fallback support for rabbitmq scheme name
+  $defaults{port} = 5671 if $defaults{tls};
+
+  # Get host & port
+  $defaults{host} = $self->url->host
+    if defined $self->url->host && $self->url->host ne '';
+  $defaults{port} = $self->url->port if defined $self->url->port;
+
+  # Get user & password
+  my $userinfo = $self->url->userinfo;
+  if (defined $userinfo) {
+    my ($user, $pass) = split /:/, $userinfo;
+    $defaults{user} = $user;
+    $defaults{pass} = $pass;
+  }
+
+  my $vhost = url_unescape $self->url->path;
+  $vhost =~ s|^/(.+)$|$1|;
+  $defaults{vhost} = $vhost if defined $vhost && $vhost ne '';
+
+  # Query params
+  my $params = $defaults{params} = $self->url->query;
+
+  # Handle common aliases to internal names
+  my %aliases = (
+    cacertfile           => 'ca',
+    certfile             => 'cert',
+    keyfile              => 'key',
+    fail_if_no_peer_cert => 'verify',
+    connection_timeout   => 'timeout'
+  );
+  $params->param($aliases{$_}, $params->param($_))
+    foreach grep { defined $params->param($_) } keys %aliases;
+
+  # Some query parameters are translated to attribute values
+  my %attributes = (
+    heartbeat_timeout => 'heartbeat',
+    connect_timeout   => 'timeout',
+    max_channels      => 'channel_max'
+  );
+  $self->$_($params->param($attributes{$_}))
+    foreach grep { defined $params->param($attributes{$_}) } keys %attributes;
+
+  # Set all
+  $self->$_($defaults{$_}) foreach keys %defaults;
+
+  return $self->$attr;
 }
 
 sub _close {
@@ -216,22 +308,20 @@ sub _parse_frames {
 }
 
 sub _connect {
-  my ($self, $server, $cb) = @_;
+  my ($self, $cb) = @_;
 
   # Options
   # Parse according to (https://www.rabbitmq.com/uri-spec.html)
-  my $url     = $self->url;
-  my $query   = $url->query;
   my $options = {
-    address  => $url->host,
-    port     => $url->port || 5672,
+    address  => $self->host,
+    port     => $self->port,
     timeout  => $self->connect_timeout,
-    tls      => ($url->scheme =~ /^(amqp|rabbitmq)s$/) ? 1 : 0, # Fallback support for rabbitmq
-    tls_ca   => scalar $query->param('ca'),
-    tls_cert => scalar $query->param('cert'),
-    tls_key  => scalar $query->param('key')
+    tls      => $self->tls,
+    tls_ca   => scalar $self->param('ca'),
+    tls_cert => scalar $self->param('cert'),
+    tls_key  => scalar $self->param('key')
   };
-  my $verify = $query->param('verify');
+  my $verify = $self->param('verify');
   $options->{tls_verify} = hex $verify if defined $verify;
 
   # Connect
@@ -293,9 +383,6 @@ sub _connected {
 
       $self->{_server_properties} = $frame->method_frame->server_properties;
 
-      # Get user & password from $url
-      my ($user, $pass) = split /:/, $self->url->userinfo;
-
       $self->_write_frame(
         Net::AMQP::Protocol::Connection::StartOk->new(
           client_properties => {
@@ -305,12 +392,11 @@ sub _connected {
             version     => __PACKAGE__->VERSION,
           },
           mechanism => 'AMQPLAIN',
-          response  => {LOGIN => $user, PASSWORD => $pass,},
+          response  => {LOGIN => $self->user, PASSWORD => $self->pass},
           locale    => 'en_US',
         ),
       );
 
-      $self->login_user($user);
       $self->_tune($id);
     },
     sub {
@@ -355,18 +441,9 @@ sub _tune {
         }
       ) if $heartbeat;
 
-      # virtual host is in URL after the last /
-      # amqp://myuser:mypassword@ipadress:5672/myvirtualhostname
-      my $virtual_host = $self->url->path;
-      # The virtualhostname must be _without_ a / in the beginning
-      # in RabbitMQ 3.3.5. A virtual host with starting / receives a "connection refused"
-      if ($virtual_host ne '/') {
-        $virtual_host =~ s#^/##;
-      }
-
       $self->_write_expect(
         'Connection::Open' =>
-          {virtual_host => $virtual_host, capabilities => '', insist => 1,},
+          {virtual_host => $self->vhost, capabilities => '', insist => 1,},
         'Connection::OpenOk' => sub {
           $self->is_open(1);
           $self->emit('open');
@@ -469,11 +546,11 @@ sub _write {
 }
 
 sub DESTROY {
-    my $self = shift;
-    my $ioloop = $self->ioloop or return;
-    my $heartbeat_tid = $self->{heartbeat_tid};
+  my $self          = shift;
+  my $ioloop        = $self->ioloop or return;
+  my $heartbeat_tid = $self->{heartbeat_tid};
 
-    $ioloop->remove($heartbeat_tid) if $heartbeat_tid;
+  $ioloop->remove($heartbeat_tid) if $heartbeat_tid;
 }
 
 1;
@@ -629,15 +706,126 @@ Emitted when TCP/IP connection gets disconnected.
 
 L<Mojo::RabbitMQ::Client> has following attributes.
 
+=head2 tls
+
+  my $tls = $client->tls;
+  $client = $client->tls(1)
+
+Force secure connection. Default is disabled (C<0>).
+
+=head2 user
+
+  my $user = $client->user;
+  $client  = $client->user('guest')
+
+Sets username for authorization, by default it's not defined.
+
+=head2 pass
+
+  my $pass = $client->pass;
+  $client  = $client->pass('secret')
+
+Sets user password for authorization, by default it's not defined.
+
+=head2 pass
+
+  my $pass = $client->pass;
+  $client  = $client->pass('secret')
+
+Sets user password for authorization, by default it's not defined.
+
+=head2 host
+
+  my $host = $client->host;
+  $client  = $client->host('localhost')
+
+Hostname or IP address of RabbitMQ server. Defaults to C<localhost>.
+
+=head2 port
+
+  my $port = $client->port;
+  $client  = $client->port(1234)
+
+Port on which RabbitMQ server listens for new connections.
+Defaults to C<5672>, which is standard RabbitMQ server listen port.
+
+=head2 vhost
+
+  my $vhost = $client->vhost;
+  $client  = $client->vhost('/')
+
+RabbitMQ virtual server to user. Default is C</>.
+
+=head2 params
+
+  my $params = $client->params;
+  $client  = $client->params(Mojo::Parameters->new('verify=1'))
+
+Sets additional parameters for connection. Default is not defined.
+
+For list of supported parameters see L</"SUPPORTED QUERY PARAMETERS">.
+
 =head2 url
 
   my $url = $client->url;
-  $client->url('rabbitmq://...');
+  $client = $client->url('amqp://...');
+
+Sets all connection parameters in one string, according to specification from
+L<https://www.rabbitmq.com/uri-spec.html>.
+
+  amqp_URI       = "amqp[s]://" amqp_authority [ "/" vhost ] [ "?" query ]
+
+  amqp_authority = [ amqp_userinfo "@" ] host [ ":" port ]
+
+  amqp_userinfo  = username [ ":" password ]
+
+  username       = *( unreserved / pct-encoded / sub-delims )
+
+  password       = *( unreserved / pct-encoded / sub-delims )
+
+  vhost          = segment
 
 =head2 heartbeat_timeout
 
   my $timeout = $client->heartbeat_timeout;
-  $client->heartbeat_timeout(180);
+  $client     = $client->heartbeat_timeout(180);
+
+Heartbeats are use to monitor peer reachability in AMQP.
+Default value is C<60> seconds, if set to C<0> no heartbeats will be sent.
+
+=head2 connect_timeout
+
+  my $timeout = $client->connect_timeout;
+  $client     = $client->connect_timeout(5);
+
+Connection timeout used by L<Mojo::IOLoop::Client>.
+Defaults to environment variable C<MOJO_CONNECT_TIMEOUT> or C<10> seconds
+if nothing else is set.
+
+=head2 max_channels
+
+  my $max_channels = $client->max_channels;
+  $client          = $client->max_channels(10);
+
+Maximum number of channels allowed to be active. Defaults to C<0> which
+means no implicit limit.
+
+When you try to call C<add_channel> over limit an C<error> will be
+emitted on channel saying that: I<Maximum number of channels reached>.
+
+=head1 STATIC METHODS
+
+=head2 consumer
+
+  my $client = Mojo::RabbitMQ::Client->consumer(...)
+
+Shortcut for creating L<Mojo::RabbitMQ::Client::Consumer>.
+
+=head2 publisher
+
+  my $client = Mojo::RabbitMQ::Client->publisher(...)
+
+Shortcut for creating L<Mojo::RabbitMQ::Client::Publisher>.
 
 =head1 METHODS
 
@@ -654,6 +842,18 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
   $client->close();
 
+=head2 param
+
+  my $param = $client->param('name');
+  $client   = $client->param(name => 'value');
+
+=head2 add_channel
+
+  my $channel = Mojo::RabbitMQ::Client::Channel->new();
+  ...
+  $channel    = $client->add_channel($channel);
+  $channel->open;
+
 =head2 open_channel
 
   my $channel = Mojo::RabbitMQ::Client::Channel->new();
@@ -663,6 +863,50 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 =head2 delete_channel
 
   my $removed = $client->delete_channel($channel->id);
+
+=head1 SUPPORTED QUERY PARAMETERS
+
+There's no formal specification, nevertheless a list of common parameters
+recognized by officaly supported RabbitMQ clients is maintaned here:
+L<https://www.rabbitmq.com/uri-query-parameters.html>.
+
+Some shortcuts are also supported, you'll find them in parenthesis.
+
+Aliases are less significant, so when both are specified only primary
+value will be used.
+
+=head2 cacertfile (I<ca>)
+
+Path to Certificate Authority file for TLS.
+
+=head2 certfile (I<cert>)
+
+Path to the client certificate file for TLS.
+
+=head2 keyfile (I<key>)
+
+Path to the client certificate private key file for TLS.
+
+=head2 fail_if_no_peer_cert (I<verify>)
+
+TLS verification mode, defaults to 0x01 on the client-side if a certificate
+authority file has been provided, or 0x00 otherwise.
+
+=head2 auth_mechanism
+
+Currently only AMQPLAIN is supported, B<so this parameter is ignored>.
+
+=head2 heartbeat
+
+Sets requested heartbeat timeout, just like C<heartbeat_timeout> attribute.
+
+=head2 connection_timeout (I<timeout>)
+
+Sets connection timeout - see L<connection_timeout> attrribute.
+
+=head2 channel_max
+
+Sets maximum number of channels - see L<max_channels> attribute.
 
 =head1 SEE ALSO
 

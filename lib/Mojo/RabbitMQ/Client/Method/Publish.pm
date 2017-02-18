@@ -69,7 +69,7 @@ sub _header {
         message_id       => undef,
         timestamp        => time,
         type             => undef,
-        user_id          => $self->client->login_user,
+        user_id          => $self->client->user,
         app_id           => undef,
         cluster_id       => undef,
         %{ $args->{header} },
