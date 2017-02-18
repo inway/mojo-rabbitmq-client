@@ -309,7 +309,7 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 # SUPPORTED QUERY PARAMETERS
 
 There's no formal specification, nevertheless a list of common parameters
-recognized by officaly supported RabbitMQ clients is maintaned here:
+recognized by officially supported RabbitMQ clients is maintained here:
 [https://www.rabbitmq.com/uri-query-parameters.html](https://www.rabbitmq.com/uri-query-parameters.html).
 
 Some shortcuts are also supported, you'll find them in parenthesis.
@@ -344,7 +344,7 @@ Sets requested heartbeat timeout, just like `heartbeat_timeout` attribute.
 
 ## connection\_timeout (_timeout_)
 
-Sets connection timeout - see [connection\_timeout](https://metacpan.org/pod/connection_timeout) attrribute.
+Sets connection timeout - see [connection\_timeout](https://metacpan.org/pod/connection_timeout) attribute.
 
 ## channel\_max
 

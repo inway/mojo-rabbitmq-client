@@ -19,7 +19,7 @@ use Mojo::RabbitMQ::Client::Consumer;
 use Mojo::RabbitMQ::Client::LocalQueue;
 use Mojo::RabbitMQ::Client::Publisher;
 
-our $VERSION = "0.0.8";
+our $VERSION = "0.0.9";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
@@ -867,7 +867,7 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 =head1 SUPPORTED QUERY PARAMETERS
 
 There's no formal specification, nevertheless a list of common parameters
-recognized by officaly supported RabbitMQ clients is maintaned here:
+recognized by officially supported RabbitMQ clients is maintained here:
 L<https://www.rabbitmq.com/uri-query-parameters.html>.
 
 Some shortcuts are also supported, you'll find them in parenthesis.
@@ -902,7 +902,7 @@ Sets requested heartbeat timeout, just like C<heartbeat_timeout> attribute.
 
 =head2 connection_timeout (I<timeout>)
 
-Sets connection timeout - see L<connection_timeout> attrribute.
+Sets connection timeout - see L<connection_timeout> attribute.
 
 =head2 channel_max
 
