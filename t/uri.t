@@ -1,5 +1,5 @@
 use strict;
-use Test::More tests => 94;
+use Test::More tests => 79;
 
 my @order = qw(tls user pass host port vhost param);
 my @tests = ();
