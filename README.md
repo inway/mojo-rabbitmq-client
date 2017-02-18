@@ -80,6 +80,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
         $consumer->channel->ack($message)->deliver;
       }
     );
+    $consumer->start();
 
     Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
@@ -147,15 +148,126 @@ Emitted when TCP/IP connection gets disconnected.
 
 [Mojo::RabbitMQ::Client](https://metacpan.org/pod/Mojo::RabbitMQ::Client) has following attributes.
 
+## tls
+
+    my $tls = $client->tls;
+    $client = $client->tls(1)
+
+Force secure connection. Default is disabled (`0`).
+
+## user
+
+    my $user = $client->user;
+    $client  = $client->user('guest')
+
+Sets username for authorization, by default it's not defined.
+
+## pass
+
+    my $pass = $client->pass;
+    $client  = $client->pass('secret')
+
+Sets user password for authorization, by default it's not defined.
+
+## pass
+
+    my $pass = $client->pass;
+    $client  = $client->pass('secret')
+
+Sets user password for authorization, by default it's not defined.
+
+## host
+
+    my $host = $client->host;
+    $client  = $client->host('localhost')
+
+Hostname or IP address of RabbitMQ server. Defaults to `localhost`.
+
+## port
+
+    my $port = $client->port;
+    $client  = $client->port(1234)
+
+Port on which RabbitMQ server listens for new connections.
+Defaults to `5672`, which is standard RabbitMQ server listen port.
+
+## vhost
+
+    my $vhost = $client->vhost;
+    $client  = $client->vhost('/')
+
+RabbitMQ virtual server to user. Default is `/`.
+
+## params
+
+    my $params = $client->params;
+    $client  = $client->params(Mojo::Parameters->new('verify=1'))
+
+Sets additional parameters for connection. Default is not defined.
+
+For list of supported parameters see ["SUPPORTED QUERY PARAMETERS"](#supported-query-parameters).
+
 ## url
 
     my $url = $client->url;
-    $client->url('rabbitmq://...');
+    $client = $client->url('amqp://...');
+
+Sets all connection parameters in one string, according to specification from
+[https://www.rabbitmq.com/uri-spec.html](https://www.rabbitmq.com/uri-spec.html).
+
+    amqp_URI       = "amqp[s]://" amqp_authority [ "/" vhost ] [ "?" query ]
+
+    amqp_authority = [ amqp_userinfo "@" ] host [ ":" port ]
+
+    amqp_userinfo  = username [ ":" password ]
+
+    username       = *( unreserved / pct-encoded / sub-delims )
+
+    password       = *( unreserved / pct-encoded / sub-delims )
+
+    vhost          = segment
 
 ## heartbeat\_timeout
 
     my $timeout = $client->heartbeat_timeout;
-    $client->heartbeat_timeout(180);
+    $client     = $client->heartbeat_timeout(180);
+
+Heartbeats are use to monitor peer reachability in AMQP.
+Default value is `60` seconds, if set to `0` no heartbeats will be sent.
+
+## connect\_timeout
+
+    my $timeout = $client->connect_timeout;
+    $client     = $client->connect_timeout(5);
+
+Connection timeout used by [Mojo::IOLoop::Client](https://metacpan.org/pod/Mojo::IOLoop::Client).
+Defaults to environment variable `MOJO_CONNECT_TIMEOUT` or `10` seconds
+if nothing else is set.
+
+## max\_channels
+
+    my $max_channels = $client->max_channels;
+    $client          = $client->max_channels(10);
+
+Maximum number of channels allowed to be active. Defaults to `0` which
+means no implicit limit.
+
+When you try to call `add_channel` over limit an `error` will be
+emitted on channel saying that: _Maximum number of channels reached_.
+
+# STATIC METHODS
+
+## consumer
+
+    my $client = Mojo::RabbitMQ::Client->consumer(...)
+
+Shortcut for creating [Mojo::RabbitMQ::Client::Consumer](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Consumer).
+
+## publisher
+
+    my $client = Mojo::RabbitMQ::Client->publisher(...)
+
+Shortcut for creating [Mojo::RabbitMQ::Client::Publisher](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Publisher).
 
 # METHODS
 
@@ -172,6 +284,18 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
     $client->close();
 
+## param
+
+    my $param = $client->param('name');
+    $client   = $client->param(name => 'value');
+
+## add\_channel
+
+    my $channel = Mojo::RabbitMQ::Client::Channel->new();
+    ...
+    $channel    = $client->add_channel($channel);
+    $channel->open;
+
 ## open\_channel
 
     my $channel = Mojo::RabbitMQ::Client::Channel->new();
@@ -182,13 +306,57 @@ Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
     my $removed = $client->delete_channel($channel->id);
 
+# SUPPORTED QUERY PARAMETERS
+
+There's no formal specification, nevertheless a list of common parameters
+recognized by officaly supported RabbitMQ clients is maintaned here:
+[https://www.rabbitmq.com/uri-query-parameters.html](https://www.rabbitmq.com/uri-query-parameters.html).
+
+Some shortcuts are also supported, you'll find them in parenthesis.
+
+Aliases are less significant, so when both are specified only primary
+value will be used.
+
+## cacertfile (_ca_)
+
+Path to Certificate Authority file for TLS.
+
+## certfile (_cert_)
+
+Path to the client certificate file for TLS.
+
+## keyfile (_key_)
+
+Path to the client certificate private key file for TLS.
+
+## fail\_if\_no\_peer\_cert (_verify_)
+
+TLS verification mode, defaults to 0x01 on the client-side if a certificate
+authority file has been provided, or 0x00 otherwise.
+
+## auth\_mechanism
+
+Currently only AMQPLAIN is supported, **so this parameter is ignored**.
+
+## heartbeat
+
+Sets requested heartbeat timeout, just like `heartbeat_timeout` attribute.
+
+## connection\_timeout (_timeout_)
+
+Sets connection timeout - see [connection\_timeout](https://metacpan.org/pod/connection_timeout) attrribute.
+
+## channel\_max
+
+Sets maximum number of channels - see [max\_channels](https://metacpan.org/pod/max_channels) attribute.
+
 # SEE ALSO
 
 [Mojo::RabbitMQ::Client::Channel](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Channel), [Mojo::RabbitMQ::Client::Consumer](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Consumer), [Mojo::RabbitMQ::Client::Publisher](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Publisher)
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2015-2016, Sebastian Podjasek and others
+Copyright (C) 2015-2017, Sebastian Podjasek and others
 
 Based on [AnyEvent::RabbitMQ](https://metacpan.org/pod/AnyEvent::RabbitMQ) - Copyright (C) 2010 Masahito Ikuta, maintained by `bobtfish@bobtfish.net`
 
