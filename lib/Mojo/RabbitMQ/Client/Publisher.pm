@@ -12,7 +12,7 @@ has defaults => sub { {} };
 sub publish {
   my $self = shift;
   my $body = shift;
-  my $headers = shift;
+  my $headers = shift || {};
 
   my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
   $self->client($client);
