@@ -1,6 +1,7 @@
 package Mojo::RabbitMQ::Client::Publisher;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::RabbitMQ::Client;
+use Mojo::JSON qw(encode_json);
 
 has url      => undef;
 has client   => undef;
@@ -11,7 +12,7 @@ has defaults => sub { {} };
 sub publish {
   my $self = shift;
   my $body = shift;
-  my $headers = shift;
+  my $headers = shift || {};
 
   my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
   $self->client($client);
