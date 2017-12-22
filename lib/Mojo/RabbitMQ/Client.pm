@@ -5,7 +5,7 @@ use Mojo::URL;
 use Mojo::Home;
 use Mojo::IOLoop;
 use Mojo::Parameters;
-use Mojo::Util qw(url_unescape);
+use Mojo::Util qw(url_unescape dumper);
 use List::Util qw(none);
 use Scalar::Util qw(blessed);
 use File::Basename 'dirname';
@@ -236,6 +236,8 @@ sub _read {
   my ($self, $id, $chunk) = @_;
   my $chunk_len = length($chunk);
 
+  warn "<- @{[dumper $chunk]}" if DEBUG;
+
   if ($chunk_len + length($self->{buffer}) > $self->max_buffer_size) {
     $self->{buffer} = '';
     return;
@@ -383,6 +385,7 @@ sub _connected {
 
       $self->{_server_properties} = $frame->method_frame->server_properties;
 
+      warn "-- Connection::Start {product: " . $self->{_server_properties}->{product} . ", version: " . $self->{_server_properties}->{version} . "}\n" if DEBUG;
       $self->_write_frame(
         Net::AMQP::Protocol::Connection::StartOk->new(
           client_properties => {
@@ -418,6 +421,7 @@ sub _tune {
 
       my $heartbeat = $self->heartbeat_timeout || $method_frame->heartbeat;
 
+      warn "-- Connection::Tune {frame_max: " . $method_frame->frame_max . ", heartbeat: " . $method_frame->heartbeat . "}\n" if DEBUG;
       # Confirm
       $self->_write_frame(
         Net::AMQP::Protocol::Connection::TuneOk->new(
@@ -445,6 +449,8 @@ sub _tune {
         'Connection::Open' =>
           {virtual_host => $self->vhost, capabilities => '', insist => 1,},
         'Connection::OpenOk' => sub {
+          warn "-- Connection::OpenOk\n" if DEBUG;
+
           $self->is_open(1);
           $self->emit('open');
         },
@@ -539,6 +545,8 @@ sub _write {
   my $self  = shift @_;
   my $id    = shift @_;
   my $frame = shift @_;
+
+  warn "-> @{[dumper $frame]}" if DEBUG;
 
   utf8::downgrade($frame);
   $self->_loop->stream($id)->write($frame)
