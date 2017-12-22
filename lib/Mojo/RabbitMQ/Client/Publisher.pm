@@ -1,6 +1,7 @@
 package Mojo::RabbitMQ::Client::Publisher;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::RabbitMQ::Client;
+use Mojo::JSON qw(encode_json);
 
 has url      => undef;
 has client   => undef;
