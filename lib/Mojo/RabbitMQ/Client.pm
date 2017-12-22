@@ -646,7 +646,7 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
   use Mojo::RabbitMQ::Client;
   my $publisher = Mojo::RabbitMQ::Client->publisher(
-    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
+    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
   );
 
   $publisher->catch(sub { die "Some error caught in Publisher" } );

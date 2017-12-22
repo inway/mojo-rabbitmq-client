@@ -26,7 +26,7 @@ sub publish {
       my $client        = shift;
       my $query         = $client->url->query;
       my $exchange_name = $query->param('exchange');
-      my $queue_name    = $query->param('queue');
+      my $routing_key   = $query->param('routing_key');
 
       # Create a new channel with auto-assigned id
       my $channel = Mojo::RabbitMQ::Client::Channel->new();
@@ -47,7 +47,7 @@ sub publish {
 
           my $publish = $channel->publish(
             exchange    => $exchange_name,
-            routing_key => $queue_name,
+            routing_key => $routing_key,
             mandatory   => 0,
             immediate   => 0,
             header      => \%headers,
