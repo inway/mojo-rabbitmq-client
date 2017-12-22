@@ -1,5 +1,5 @@
 requires 'perl', '5.010';
-requires 'Mojolicious', '6.10';
+requires 'Mojolicious', '7.53';
 requires 'Net::AMQP', '0.06';
 requires 'File::ShareDir';
 requires 'List::Util', '1.33';

@@ -1,5 +1,6 @@
 package Mojo::RabbitMQ::Client::Channel;
 use Mojo::Base 'Mojo::EventEmitter';
+use Mojo::Promise;
 
 use Mojo::RabbitMQ::Client::LocalQueue;
 use Mojo::RabbitMQ::Client::Method;
@@ -195,6 +196,16 @@ sub declare_exchange {
   );
 }
 
+sub declare_exchange_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->declare_exchange(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
+}
+
 sub delete_exchange {
   my $self = shift;
 
@@ -207,6 +218,16 @@ sub delete_exchange {
     },
     'Exchange::DeleteOk'
   );
+}
+
+sub delete_exchange_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->delete_exchange(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
 }
 
 sub declare_queue {
@@ -228,6 +249,16 @@ sub declare_queue {
   );
 }
 
+sub declare_queue_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->declare_queue(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
+}
+
 sub bind_queue {
   my $self = shift;
 
@@ -241,6 +272,16 @@ sub bind_queue {
   );
 }
 
+sub bind_queue_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->bind_queue(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
+}
+
 sub unbind_queue {
   my $self = shift;
 
@@ -251,6 +292,16 @@ sub unbind_queue {
     },
     'Queue::UnbindOk'
   );
+}
+
+sub unbind_queue_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->unbind_queue(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
 }
 
 sub purge_queue {
@@ -266,6 +317,16 @@ sub purge_queue {
   );
 }
 
+sub purge_queue_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->purge_queue(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
+}
+
 sub delete_queue {
   my $self = shift;
 
@@ -279,6 +340,16 @@ sub delete_queue {
     },
     'Queue::DeleteOk'
   );
+}
+
+sub delete_queue_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = $self->delete_queue(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) })
+  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->deliver;
 }
 
 sub publish {
