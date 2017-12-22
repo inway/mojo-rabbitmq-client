@@ -14,14 +14,17 @@ sub publish {
   my $body = shift;
   my $headers = shift || {};
 
-  my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
-  $self->client($client);
+  unless ($self->client) {
+    my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
+    warn "created client with: " . $self->url . " - " . $client;
+    $self->client($client);
+  }
 
   # Catch all client related errors
-  $client->catch(sub { die "Some error caught in client" });
+  $self->client->catch(sub { die "Some error caught in client" });
 
   # When connection is in Open state, open new channel
-  $client->on(
+  $self->client->on(
     open => sub {
       my $client        = shift;
       my $query         = $client->url->query;
@@ -68,7 +71,7 @@ sub publish {
   );
 
   # Start connection
-  $client->connect;
+  $self->client->connect;
 }
 
 1;
