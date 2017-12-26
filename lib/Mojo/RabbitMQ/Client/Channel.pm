@@ -201,8 +201,8 @@ sub declare_exchange_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->declare_exchange(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -225,8 +225,8 @@ sub delete_exchange_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->delete_exchange(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -254,8 +254,8 @@ sub declare_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->declare_queue(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -277,8 +277,8 @@ sub bind_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->bind_queue(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -299,8 +299,8 @@ sub unbind_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->unbind_queue(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -322,8 +322,8 @@ sub purge_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->purge_queue(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
@@ -347,8 +347,8 @@ sub delete_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->delete_queue(@_);
-  $method->on('success' => sub { shift; $promise->resolve(@_) })
-  $method->on('error' => sub { shift; $promise->reject(@_) })
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
 }
 
