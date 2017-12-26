@@ -702,6 +702,22 @@ Internal exchanges are used to construct wiring that is not visible to applicati
 
 =back
 
+=head2 declare_exchange_p
+
+Same as L<declare_exchange> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->declare_exchange_p(
+    exchange => 'mojo',
+    type => 'fanout',
+    durable => 1,
+    ...
+  )->then(sub {
+    say "Exchange declared...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Exchange declaration error: $err";
+  })->wait;
+
 =head2 delete_exchange
 
   $channel->delete_exchange(exchange => 'mojo')->deliver;
@@ -725,6 +741,19 @@ If set, the server will only delete the exchange if it has no queue bindings. If
 queue bindings the server does not delete it but raises a channel exception instead.
 
 =back
+
+=head2 delete_exchange_p
+
+Same as L<delete_exchange> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->delete_exchange_p(
+    exchange => 'mojo'
+  )->then(sub {
+    say "Exchange deleted...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Exchange removal error: $err";
+  })->wait;
 
 =head2 declare_queue
 
@@ -775,6 +804,20 @@ using the Delete method as normal.
 
 =back
 
+=head2 declare_queue_p
+
+Same as L<declare_queue> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->declare_queue_p(
+    queue => 'mq',
+    durable => 1
+  )->then(sub {
+    say "Queue declared...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Queue declaration error: $err";
+  })->wait;
+
 =head2 bind_queue
 
   $channel->bind_queue(
@@ -815,6 +858,21 @@ of empty routing keys depends on the exchange implementation.
 
 =back
 
+=head2 bind_queue_p
+
+Same as L<bind_queue> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->bind_queue_p(
+    exchange => 'mojo',
+    queue => 'mq',
+    routing_key => ''
+  )->then(sub {
+    say "Queue bound...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Queue binding error: $err";
+  })->wait;
+
 =head2 unbind_queue
 
   $channel->unbind_queue(
@@ -845,6 +903,21 @@ Specifies the routing key of the binding to unbind.
 
 =back
 
+=head2 unbind_queue_p
+
+Same as L<unbind_queue> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->unbind_queue_p(
+    exchange => 'mojo',
+    queue => 'mq',
+    routing_key => ''
+  )->then(sub {
+    say "Queue unbound...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Queue unbinding error: $err";
+  })->wait;
+
 =head2 purge_queue
 
   $channel->purge_queue(queue => 'mq')->deliver;
@@ -862,6 +935,19 @@ Following arguments are accepted:
 Specifies the name of the queue to purge.
 
 =back
+
+=head2 purge_queue_p
+
+Same as L<purge_queue> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->purge_queue_p(
+    queue => 'mq',
+  )->then(sub {
+    say "Queue purged...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Queue purging error: $err";
+  })->wait;
 
 =head2 delete_queue
 
@@ -891,6 +977,20 @@ has consumers the server does does not delete it but raises a channel exception 
 If set, the server will only delete the queue if it has no messages.
 
 =back
+
+=head2 delete_queue_p
+
+Same as L<delete_queue> but auto-delivers method and returns a L<Mojo::Promise> object.
+
+  $channel->delete_queue_p(
+    queue => 'mq',
+    if_empty => 1
+  )->then(sub {
+    say "Queue removed...";
+  })->catch(sub {
+    my $err = shift;
+    warn "Queue removal error: $err";
+  })->wait;
 
 =head2 publish
 
