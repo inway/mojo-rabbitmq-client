@@ -506,7 +506,6 @@ sub _expect {
 
   return unless $queue;
 
-  weaken $self;
   $queue->get(
     sub {
       my $frame = shift;
