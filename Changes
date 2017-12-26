@@ -3,6 +3,7 @@
   - Implement DEBUG on Client as suggested in #11
   - Fix query parameter naming in Publisher
   - Fix missing imports in Publisher #15
+  - Fix #14
 0.0.9 2017-02-18T11:07:56Z
   - Proper implementation of URI parser PR#8 & #9
   - Support for query parameter with aliases
