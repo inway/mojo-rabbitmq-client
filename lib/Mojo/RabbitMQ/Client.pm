@@ -530,25 +530,26 @@ sub _expect {
 sub _write_frame {
   my $self = shift;
   my $id   = $self->stream_id;
-  my ($out, $channel) = @_;
+  my ($out, $channel, $cb) = @_;
 
   if ($out->isa('Net::AMQP::Protocol::Base')) {
     $out = $out->frame_wrap;
   }
   $out->channel($channel // 0);
 
-  return $self->_write($id, $out->to_raw_frame);
+  return $self->_write($id, $out->to_raw_frame, $cb);
 }
 
 sub _write {
   my $self  = shift @_;
   my $id    = shift @_;
   my $frame = shift @_;
+  my $cb    = shift @_;
 
   warn "-> @{[dumper $frame]}" if DEBUG;
 
   utf8::downgrade($frame);
-  $self->_loop->stream($id)->write($frame)
+  $self->_loop->stream($id)->write($frame => $cb)
     if defined $self->_loop->stream($id);
 }
 

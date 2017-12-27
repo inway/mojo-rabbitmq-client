@@ -20,10 +20,11 @@ sub deliver {
     = {header => delete $args{header} || {}, weight => delete $args{weight}};
   my $body = delete $args{body} || '';
 
-  $self->_publish(%args)->_header($header_args, $body)->_body($body)
-    ->is_sent(1);
+  $self->_publish(%args)->_header($header_args, $body)->_body($body, sub {
+    $self->is_sent(1);
 
-  $self->emit('success');
+    $self->emit('success');
+  });
 
   return $self if !$args{mandatory} && !$args{immediate};
 
@@ -52,7 +53,7 @@ sub _publish {
 }
 
 sub _header {
-  my ($self, $args, $body,) = @_;
+  my ($self, $args, $body) = @_;
 
   $self->client->_write_frame(
     Net::AMQP::Frame::Header->new(
@@ -82,10 +83,10 @@ sub _header {
 }
 
 sub _body {
-  my ($self, $body,) = @_;
+  my ($self, $body, $cb) = @_;
 
   $self->client->_write_frame(Net::AMQP::Frame::Body->new(payload => $body),
-    $self->channel->id);
+    $self->channel->id, $cb);
 
   return $self;
 }
