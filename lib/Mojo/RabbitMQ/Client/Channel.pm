@@ -361,6 +361,19 @@ sub publish {
   )->setup(@_);
 }
 
+sub publish_p {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+  my $method = Mojo::RabbitMQ::Client::Method::Publish->new(
+    client  => $self->client,
+    channel => $self
+  )->setup(@_);
+  $method->on('success' => sub { shift; $promise->resolve(@_) });
+  $method->on('error' => sub { shift; $promise->reject(@_) });
+  $method->deliver;
+}
+
 sub consume {
   my $self = shift;
 

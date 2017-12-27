@@ -1,7 +1,10 @@
 package Mojo::RabbitMQ::Client::Publisher;
-use Mojo::Base 'Mojo::EventEmitter';
+use Mojo::Base -base;
+use Mojo::Promise;
 use Mojo::RabbitMQ::Client;
 use Mojo::JSON qw(encode_json);
+
+use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
 has url      => undef;
 has client   => undef;
@@ -10,68 +13,108 @@ has setup    => 0;
 has defaults => sub { {} };
 
 sub publish {
-  my $self = shift;
-  my $body = shift;
-  my $headers = shift || {};
+  my $self    = shift;
+  my $body    = shift;
+  my $headers = {};
+  my %args    = ();
 
-  unless ($self->client) {
-    my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
-    warn "created client with: " . $self->url . " - " . $client;
-    $self->client($client);
+  if (ref($_[0]) eq 'HASH') {
+    $headers = shift;
+  }
+  if (@_) {
+    %args = (@_);
   }
 
-  # Catch all client related errors
-  $self->client->catch(sub { die "Some error caught in client" });
+  my $promise = Mojo::Promise->new()->resolve();
 
-  # When connection is in Open state, open new channel
-  $self->client->on(
-    open => sub {
-      my $client        = shift;
-      my $query         = $client->url->query;
+  unless ($self->client) {
+    $promise = $promise->then(
+      sub {
+        warn "-- spawn new client\n" if DEBUG;
+        my $client_promise = Mojo::Promise->new();
+
+        my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
+        $self->client($client);
+
+        # Catch all client related errors
+        $self->client->catch(sub { $client_promise->reject(@_) });
+
+        # When connection is in Open state, open new channel
+        $self->client->on(
+          open => sub {
+            warn "-- client open\n" if DEBUG;
+            $client_promise->resolve(@_);
+          }
+        );
+
+        # Start connection
+        $client->connect;
+
+        return $client_promise;
+      }
+    );
+  }
+
+  # Create a new channel with auto-assigned id
+  unless ($self->channel) {
+    $promise = $promise->then(
+      sub {
+        warn "-- create new channel\n" if DEBUG;
+        my $channel_promise = Mojo::Promise->new();
+
+        my $channel         = Mojo::RabbitMQ::Client::Channel->new();
+
+        $channel->catch(sub { $channel_promise->reject(@_) });
+
+        $channel->on(
+          open => sub {
+            my ($channel) = @_;
+            $self->channel($channel);
+
+            warn "-- channel opened\n" if DEBUG;
+
+            $channel_promise->resolve();
+          }
+        );
+        $channel->on(close => sub { warn 'Channel closed' });
+
+        $self->client->open_channel($channel);
+
+        return $channel_promise;
+      }
+    );
+  }
+
+  $promise = $promise->then(
+    sub {
+      warn "-- publish message\n" if DEBUG;
+      my $query         = $self->client->url->query;
       my $exchange_name = $query->param('exchange');
       my $routing_key   = $query->param('routing_key');
+      my %headers       = (content_type => 'text/plain', %$headers);
 
-      # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Client::Channel->new();
+      if (ref($body)) {
+        $headers{content_type} = 'application/json';
+        $body = encode_json $body;
+      }
 
-      $channel->catch(sub { die "Error on channel received" });
-
-      $channel->on(
-        open => sub {
-          my ($channel) = @_;
-          $self->channel($channel);
-
-          my %headers = (content_type => 'text/plain', %$headers);
-
-          if (ref($body) eq 'HASH') {
-            $headers{content_type} = 'application/json';
-            $body = encode_json $body;
-          }
-
-          my $publish = $channel->publish(
-            exchange    => $exchange_name,
-            routing_key => $routing_key,
-            mandatory   => 0,
-            immediate   => 0,
-            header      => \%headers,
-            body        => $body
-          );
-
-          # Deliver this message to server
-          $publish->on('success' => sub {
-            $self->emit('success');
-          });
-          $publish->deliver();
-        }
+      return $self->channel->publish_p(
+        exchange    => $exchange_name,
+        routing_key => $routing_key,
+        mandatory   => 0,
+        immediate   => 0,
+        header      => \%headers,
+        %args,
+        body        => $body
       );
-      $channel->on(close => sub { warn 'Channel closed' });
-
-      $client->open_channel($channel);
     }
   );
 
-  # Start connection
-  $self->client->connect;
+  return $promise if defined wantarray;
+
+  warn "-- called in void context, wait for promise\n" if DEBUG;
+
+  $promise->wait;
 }
 
 1;
@@ -86,32 +129,74 @@ Mojo::RabbitMQ::Client::Publisher - simple Mojo::RabbitMQ::Client based publishe
 
   use Mojo::RabbitMQ::Client::Publisher;
   my $publisher = Mojo::RabbitMQ::Client::Publisher->new(
-    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
+    url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
   );
 
-  $publisher->catch(sub { die "Some error caught in Publisher" } );
-  $publisher->on('success' => sub { say "Publisher ready" });
-
   $publisher->publish('plain text');
-  $publisher->publish({encode => { to => 'json'}});
 
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+  $publisher->publish({encode => { to => 'json'}});
 
 =head1 DESCRIPTION
 
-=head1 EVENTS
 
-L<Mojo::RabbitMQ::Client::Publisher> inherits all events from L<Mojo::EventEmitter> and can emit the
-following new ones.
 
 =head1 ATTRIBUTES
 
 L<Mojo::RabbitMQ::Client::Publisher> has following attributes.
 
+=head2 url
+
+Sets all connection parameters in one string, according to specification from
+L<https://www.rabbitmq.com/uri-spec.html>.
+
+For detailed description please see L<Mojo::RabbitMQ::Client#url>.
+
 =head1 METHODS
 
-L<Mojo::RabbitMQ::Client::Publisher> inherits all methods from L<Mojo::EventEmitter> and implements
-the following new ones.
+L<Mojo::RabbitMQ::Client::Publisher> implements only single method.
+
+=head2 publish
+
+  $publisher->publish('simple plain text body');
+
+  $publisher->publish({ some => 'json' });
+
+  $publisher->publish($body, { header => 'content' }, routing_key => 'mojo', mandatory => 1);
+
+Method signature
+
+  publish($body!, \%headers?, *@params)
+
+=over 2
+
+=item body
+
+First argument is mandatory body content of published message.
+Any reference passed here will be encoded as JSON and accordingly C<content_type> header
+will be set to C<application/json>.
+
+=item headers
+
+If second argument is a HASHREF it will be merged to message headers.
+
+=item params
+
+Any other arguments will be considered key/value pairs and passed to publish method as
+arguments overriding everything besides body argument.
+
+So this:
+
+  $publisher->publish($body, { header => 'content' });
+
+can be also written like this:
+
+  $publisher->publish($body, header => { header => 'content' });
+
+But beware - headers get merged, but params override values so when you write this:
+
+  $publisher->publish({ json => 'object' }, header => { header => 'content' });
+
+message will lack C<content_type> header!
 
 =head1 SEE ALSO
 
