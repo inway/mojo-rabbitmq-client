@@ -134,7 +134,14 @@ Mojo::RabbitMQ::Client::Publisher - simple Mojo::RabbitMQ::Client based publishe
 
   $publisher->publish('plain text');
 
-  $publisher->publish({encode => { to => 'json'}});
+  $publisher->publish(
+    {encode => { to => 'json'}},
+    routing_key => 'mojo_mq'
+  )->then(sub {
+    say "Message published";
+  })->catch(sub {
+    die "Publishing failed"
+  })->wait;
 
 =head1 DESCRIPTION
 

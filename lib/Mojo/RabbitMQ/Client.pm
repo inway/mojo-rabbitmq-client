@@ -657,13 +657,16 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
     url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
   );
 
-  $publisher->catch(sub { die "Some error caught in Publisher" } );
-  $publisher->on('success' => sub { say "Publisher ready" });
-
   $publisher->publish('plain text');
-  $publisher->publish({encode => { to => 'json'}});
 
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+  $publisher->publish(
+    {encode => { to => 'json'}},
+    routing_key => 'mojo_mq'
+  )->then(sub {
+    say "Message published";
+  })->catch(sub {
+    die "Publishing failed"
+  })->wait;
 
 =head1 DESCRIPTION
 
