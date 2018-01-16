@@ -1,6 +1,7 @@
 {{$NEXT}}
   - Start implementing Mojo::Promise, drop support for Mojolicious <7.53
   - Implement DEBUG on Client as suggested in #11
+  - Fix early success event from ->publish #16
   - Fix query parameter naming in Publisher
   - Fix missing imports in Publisher #15
   - Fix #14
