@@ -129,7 +129,7 @@ sub add_channel {
   return $channel;
 }
 
-sub acquire_channel {
+sub acquire_channel_p {
   my $self = shift;
 
   my $promise = Mojo::Promise->new;

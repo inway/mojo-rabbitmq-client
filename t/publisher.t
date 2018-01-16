@@ -21,7 +21,7 @@ my $client = Mojo::RabbitMQ::Client->new(url => $url);
 $client->connect_p->then(
   sub {
     my $client = shift;
-    return $client->acquire_channel();
+    return $client->acquire_channel_p();
   }
 )->then(
   sub {
