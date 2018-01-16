@@ -204,6 +204,8 @@ sub declare_exchange_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub delete_exchange {
@@ -228,6 +230,8 @@ sub delete_exchange_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub declare_queue {
@@ -257,6 +261,8 @@ sub declare_queue_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub bind_queue {
@@ -280,6 +286,8 @@ sub bind_queue_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub unbind_queue {
@@ -302,6 +310,8 @@ sub unbind_queue_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub purge_queue {
@@ -325,6 +335,8 @@ sub purge_queue_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub delete_queue {
@@ -350,6 +362,8 @@ sub delete_queue_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub publish {
@@ -372,6 +386,8 @@ sub publish_p {
   $method->on('success' => sub { shift; $promise->resolve(@_) });
   $method->on('error' => sub { shift; $promise->reject(@_) });
   $method->deliver;
+
+  return $promise;
 }
 
 sub consume {
