@@ -5,6 +5,7 @@ use Mojo::URL;
 use Mojo::Home;
 use Mojo::IOLoop;
 use Mojo::Parameters;
+use Mojo::Promise;
 use Mojo::Util qw(url_unescape dumper);
 use List::Util qw(none);
 use Scalar::Util qw(blessed);
@@ -48,10 +49,32 @@ sub connect {
   $self->{buffer} = '';
 
   my $id;
-  $id = $self->_connect(sub { $self->_connected($id, @_) });
+  $id = $self->_connect(sub { $self->_connected($id) });
   $self->stream_id($id);
 
   return $id;
+}
+
+sub connect_p {
+  my $self = shift;
+  my $promise = Mojo::Promise->new;
+
+  my $id;
+
+  weaken $self;
+  my $handler = sub {
+    my ($err) = @_;
+    if (defined $err) {
+      return $promise->reject($err);
+    }
+
+    return $promise->resolve($self);
+  };
+
+  $id = $self->_connect(sub { $self->_connected($id, $handler) });
+  $self->stream_id($id);
+
+  return $promise;
 }
 
 sub consumer {
@@ -104,6 +127,19 @@ sub add_channel {
   $self->channels->{$id} = $channel->id($id)->client($self);
 
   return $channel;
+}
+
+sub acquire_channel {
+  my $self = shift;
+
+  my $promise = Mojo::Promise->new;
+
+  my $channel = Mojo::RabbitMQ::Client::Channel->new();
+  $channel->catch(sub { $promise->reject(@_) });
+  $channel->on(close => sub { warn "Channel closed" });
+  $channel->on(open => sub { $promise->resolve(@_) });
+
+  return $promise;
 }
 
 sub open_channel {
@@ -350,7 +386,7 @@ sub _connect {
 }
 
 sub _connected {
-  my ($self, $id, $query) = @_;
+  my ($self, $id, $cb) = @_;
 
   # Inactivity timeout
   my $stream = $self->_loop->stream($id)->timeout(0);
@@ -400,7 +436,7 @@ sub _connected {
         ),
       );
 
-      $self->_tune($id);
+      $self->_tune($id, $cb);
     },
     sub {
       $self->emit(error => 'Unable to start connection: ' . shift);
@@ -409,7 +445,7 @@ sub _connected {
 }
 
 sub _tune {
-  my $self = shift;
+  my ($self, $id, $cb) = @_;
 
   weaken $self;
   $self->_expect(
@@ -453,9 +489,12 @@ sub _tune {
 
           $self->is_open(1);
           $self->emit('open');
+          $cb->() if defined $cb;
         },
         sub {
-          $self->emit(error => 'Unable to open connection: ' . shift);
+          my $err = shift;
+          $self->emit(error => 'Unable to open connection: ' . $err);
+          $cb->($err) if defined $cb;
         }
       );
     },
