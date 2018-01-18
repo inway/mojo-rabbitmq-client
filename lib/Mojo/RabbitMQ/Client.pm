@@ -515,10 +515,12 @@ sub _write_expect {
 
   $channel_id ||= 0;
 
+  my $method_frame = Net::AMQP::Frame::Method->new(
+    method_frame => $method->new(%$args)
+  );
+
   $self->_write_frame(
-    Net::AMQP::Frame::Method->new(    #
-      method_frame => $method->new(%$args)    #
-    ),
+    $method_frame,
     $channel_id
   );
 
