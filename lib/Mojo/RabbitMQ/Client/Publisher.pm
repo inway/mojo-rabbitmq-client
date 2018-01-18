@@ -14,6 +14,12 @@ has defaults => sub { {} };
 
 sub publish {
   my $self    = shift;
+
+  $self->publish_p(@_)->wait;
+}
+
+sub publish_p {
+  my $self    = shift;
   my $body    = shift;
   my $headers = {};
   my %args    = ();
@@ -76,7 +82,7 @@ sub publish {
             $channel_promise->resolve();
           }
         );
-        $channel->on(close => sub { warn 'Channel closed' });
+        $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
 
         $self->client->open_channel($channel);
 
@@ -110,11 +116,7 @@ sub publish {
     }
   );
 
-  return $promise if defined wantarray;
-
-  warn "-- called in void context, wait for promise\n" if DEBUG;
-
-  $promise->wait;
+  return $promise;
 }
 
 1;
@@ -134,7 +136,7 @@ Mojo::RabbitMQ::Client::Publisher - simple Mojo::RabbitMQ::Client based publishe
 
   $publisher->publish('plain text');
 
-  $publisher->publish(
+  $publisher->publish_p(
     {encode => { to => 'json'}},
     routing_key => 'mojo_mq'
   )->then(sub {
