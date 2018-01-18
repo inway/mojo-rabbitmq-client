@@ -48,42 +48,75 @@ SKIP: {
   )->wait;
 
   # tests
+  my @tests = (
+    ['plain text',    'plain text',       'text/plain'],
+    ['hash as json',  {json => 'object'}, 'application/json'],
+    ['array as json', ['array'],          'application/json'],
+  );
 
   my $publisher = Mojo::RabbitMQ::Client::Publisher->new(url => $url);
 
-  $publisher->publish_p('plain text')->then(sub { pass('text published') })->wait;
-
-  $publisher->publish_p({json => 'object'})->then(sub { pass('json published') })
-    ->wait;
-
-  $publisher->publish_p(['array'])->then(sub { pass('array published') })->wait;
+  foreach my $t (@tests) {
+    $publisher->publish_p($t->[1])->then(sub { pass('published: ' . $t->[0]) })->wait;
+  }
 
   $publisher->publish_p(
     {json         => 'object'},
     {content_type => 'text/plain'},
     routing_key => '#'
-  )->then(sub { pass('json published') })->wait;
+  )->then(sub { pass('json published into the void') })->wait;
 
 
   # verify
-
-  my $consumer = Mojo::RabbitMQ::Client->consumer(
-    url      => $url . "&queue_name=" . $queue_name,
-    defaults => {
-      qos      => {prefetch_count => 1},
-      queue    => {auto_delete    => 1},
-      consumer => {no_ack         => 0},
+  my $channel;
+  Mojo::RabbitMQ::Client->new(url => $url)->connect_p->then(
+    sub {
+      shift->acquire_channel_p();
     }
-  );
+  )->then(
+    sub {
+      $channel = shift;
+    }
+  )->wait;
 
-  $consumer->catch(sub { failure('Consumer: Connection or other server errors') }
-  );
-  $consumer->on(connect => sub { pass('Consumer: Connected to server') });
-  $consumer->on(
-    'message' => sub {
-      my ($consumer, $message) = @_;
-      pass('Consumer: Got message - ' . $message);
-      $consumer->close();
+  foreach my $t (@tests) {
+    $channel->get_p(queue => $queue_name, no_ack => 1)->then(
+      sub {
+        my $channel = shift;
+        my $frame = shift;
+        my $message = shift;
+
+        if ($message and $message->{header}->{content_type} eq $t->[2]) {
+          pass("received valid content_type");
+        } else {
+          fail("received something not valid");
+        }
+      }
+    )->wait;
+  }
+
+  # There should be nothing else waiting
+  $channel->get_p(queue => $queue_name, no_ack => 1)->then(
+    sub {
+      my $channel = shift;
+      fail("received something extra") if defined $_[1];
+    }
+  )->wait;
+}
+
+__END__
+my $channel = Mojo::RabbitMQ::Client->new(url => $url)->connect_p->then(sub { shift->acquire_channel_p() }->wait;
+
+foreach my $t (@tests) {
+  my ($channel, $frame, $message) = $channel->get_p(queue => $queue_name, no_ack => 1)->wait;
+
+  if ($message and $message->{header}->{content_type} eq $t->[2]) {
+    pass("received valid content_type");
+  } else {
+    fail("received something not valid");
+  }
+}
+
     }
   );
   $consumer->on(
