@@ -470,12 +470,12 @@ sub _tune {
         ),
       );
 
- # According to https://www.rabbitmq.com/amqp-0-9-1-errata.html
- # The client should start sending heartbeats after receiving a Connection.Tune
- # method, and start monitoring heartbeats after sending Connection.Open.
- # -and-
- # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
- # heartbeats, the peer is considered to be unreachable.
+      # According to https://www.rabbitmq.com/amqp-0-9-1-errata.html
+      # The client should start sending heartbeats after receiving a Connection.Tune
+      # method, and start monitoring heartbeats after sending Connection.Open.
+      # -and-
+      # Heartbeat frames are sent about every timeout / 2 seconds. After two missed
+      # heartbeats, the peer is considered to be unreachable.
       $self->{heartbeat_tid} = $self->_loop->recurring(
         $heartbeat / 2 => sub {
           return unless time() - $self->heartbeat_sent > $heartbeat / 2;
