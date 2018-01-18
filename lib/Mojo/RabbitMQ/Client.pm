@@ -271,10 +271,11 @@ sub _handle {
 sub _read {
   my ($self, $id, $chunk) = @_;
   my $chunk_len = length($chunk);
+  my $buffer_len = defined $self->{buffer} ? length($self->{buffer}) : 0;
 
   warn "<- @{[dumper $chunk]}" if DEBUG;
 
-  if ($chunk_len + length($self->{buffer}) > $self->max_buffer_size) {
+  if ($chunk_len + $buffer_len > $self->max_buffer_size) {
     $self->{buffer} = '';
     return;
   }
