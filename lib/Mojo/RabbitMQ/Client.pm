@@ -168,6 +168,7 @@ sub close {
   $self->_write_expect(
     'Connection::Close'   => {},
     'Connection::CloseOk' => sub {
+      warn "-- Connection::CloseOk\n" if DEBUG;
       $self->emit('close');
       $self->_close;
     },

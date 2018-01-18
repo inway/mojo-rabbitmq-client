@@ -6,6 +6,8 @@ use Mojo::RabbitMQ::Client::LocalQueue;
 use Mojo::RabbitMQ::Client::Method;
 use Mojo::RabbitMQ::Client::Method::Publish;
 
+use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
+
 has id            => 0;
 has is_open       => 0;
 has is_active     => 0;
@@ -32,6 +34,7 @@ sub open {
   $self->client->_write_expect(
     'Channel::Open'   => {},
     'Channel::OpenOk' => sub {
+      warn "-- Channel::OpenOk\n" if DEBUG;
       $self->is_open(1)->is_active(1)->emit('open');
     },
     sub {
@@ -148,6 +151,7 @@ sub _close {
   $self->client->_write_expect(
     'Channel::Close'   => {},
     'Channel::CloseOk' => sub {
+      warn "-- Channel::CloseOk\n" if DEBUG;
       $self->is_open(0)->is_active(0);
       $self->client->delete_channel($self->id);
       $self->emit('close');
@@ -192,7 +196,9 @@ sub declare_exchange {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Exchange::DeclareOk'
+    'Exchange::DeclareOk' => sub {
+      warn "-- Exchange::DeclareOk\n" if DEBUG;
+    }
   );
 }
 
@@ -218,7 +224,9 @@ sub delete_exchange {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Exchange::DeleteOk'
+    'Exchange::DeleteOk' => sub {
+      warn "-- Exchange::DeleteOk\n" if DEBUG;
+    }
   );
 }
 
@@ -249,7 +257,9 @@ sub declare_queue {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Queue::DeclareOk'
+    'Queue::DeclareOk' => sub {
+      warn "-- Queue::DeclareOk\n" if DEBUG;
+    }
   );
 }
 
@@ -274,7 +284,9 @@ sub bind_queue {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Queue::BindOk'
+    'Queue::BindOk' => sub {
+      warn "-- Queue::BindOk\n" if DEBUG;
+    }
   );
 }
 
@@ -298,7 +310,9 @@ sub unbind_queue {
       @_,             # queue, exchange, routing_key
       ticket => 0,
     },
-    'Queue::UnbindOk'
+    'Queue::UnbindOk' => sub {
+      warn "-- Queue::UnbindOk\n" if DEBUG;
+    }
   );
 }
 
@@ -323,7 +337,9 @@ sub purge_queue {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Queue::PurgeOk'
+    'Queue::PurgeOk' => sub {
+      warn "-- Queue::PurgeOk\n" if DEBUG;
+    }
   );
 }
 
@@ -350,7 +366,9 @@ sub delete_queue {
       ticket => 0,
       nowait => 0,    # FIXME
     },
-    'Queue::DeleteOk'
+    'Queue::DeleteOk' => sub {
+      warn "-- Queue::DeleteOk\n" if DEBUG;
+    }
   );
 }
 
@@ -403,7 +421,9 @@ sub consume {
       ticket => 0,
       nowait => 0
     },
-    'Basic::ConsumeOk'
+    'Basic::ConsumeOk' => sub {
+      warn "-- Basic::ConsumeOk\n" if DEBUG;
+    }
   );
   $method->on(
     success => sub {
@@ -427,7 +447,9 @@ sub cancel {
       @_,    # consumer_tag
       nowait => 0,
     },
-    'Basic::CancelOk'
+    'Basic::CancelOk' => sub {
+      warn "-- Basic::CancelOk\n" if DEBUG;
+    }
   );
   $method->on(
     success => sub {
