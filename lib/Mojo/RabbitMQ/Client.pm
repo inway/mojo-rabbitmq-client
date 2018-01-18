@@ -139,6 +139,8 @@ sub acquire_channel_p {
   $channel->on(close => sub { warn "Channel closed" });
   $channel->on(open => sub { $promise->resolve(@_) });
 
+  $self->open_channel($channel);
+
   return $promise;
 }
 
