@@ -45,10 +45,6 @@ SKIP: {
         routing_key => $queue_name,
       );
     }
-  )->then(
-    sub {
-      warn "!!!! setup done\n";
-    }
   )->wait;
 
   # tests
