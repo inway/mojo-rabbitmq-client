@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Fix circular includes by #20 (@christopherraa)
   - Start implementing Mojo::Promise, drop support for Mojolicious <7.53
   - Implement DEBUG on Client as suggested in #11
   - Fix early success event from ->publish #16
