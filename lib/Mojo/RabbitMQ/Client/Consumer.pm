@@ -1,91 +1,105 @@
 package Mojo::RabbitMQ::Client::Consumer;
 use Mojo::Base 'Mojo::EventEmitter';
+use Mojo::Promise;
 require Mojo::RabbitMQ::Client;
+
+use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
 has url      => undef;
 has client   => undef;
 has channel  => undef;
+has queue    => undef;
 has setup    => 0;
 has defaults => sub { {} };
 
 sub start {
   my $self = shift;
+  $self->start_p(@_)->wait;
+}
 
-  my $client = Mojo::RabbitMQ::Client->new(url => $self->url);
-  $self->client($client);
+sub start_p {
+  my $self = shift;
 
-  # Catch all client related errors
-  $client->catch(sub { die "Some error caught in client" });
+  my $promise = Mojo::Promise->new()->resolve();
 
-  # When connection is in Open state, open new channel
-  $client->on(
-    open => sub {
-      my $client        = shift;
-      my $query         = $client->url->query;
-      my $exchange_name = $query->param('exchange');
-      my $queue_name    = $query->param('queue');
+  unless ($self->client) {
+    $promise = $promise->then(
+      sub {
+        warn "-- spawn new client\n" if DEBUG;
+        my $client_promise = Mojo::Promise->new();
+        my $client         = Mojo::RabbitMQ::Client->new(url => $self->url);
+        $self->client($client);
 
-      $self->emit('connect');
+        # Catch all client related errors
+        $self->client->catch(sub { $client_promise->reject(@_) });
 
-      # Create a new channel with auto-assigned id
-      my $channel = Mojo::RabbitMQ::Client::Channel->new();
+        # When connection is in Open state, open new channel
+        $client->on(
+          open => sub {
+            warn "-- client open\n" if DEBUG;
+            $client_promise->resolve(@_);
+          }
+        );
+        $client->on('close' => sub { shift; $self->emit('close', @_) });
 
-      $channel->catch(sub { die "Error on channel received" });
+        # Start connection
+        $client->connect;
 
-      $channel->on(
-        open => sub {
-          my ($channel) = @_;
-          $self->channel($channel);
-          $channel->qos(%{$self->defaults->{qos}})->deliver;
+        return $client_promise;
+      }
+    );
+  }
 
-          my $queue = $channel->declare_queue(
-            queue => $queue_name,
-            %{$self->defaults->{queue}}
-          );
-          $queue->on(
-            success => sub {
-              my $bind = $channel->bind_queue(
-                exchange    => $exchange_name,
-                queue       => $queue_name,
-                routing_key => $queue_name,
-              );
-              $bind->on(
-                success => sub {
+  # Create a new channel with auto-assigned id
+   unless ($self->channel)  {
+    $promise = $promise->then(
+      sub {
+        warn "-- create new channel\n" if DEBUG;
+        my $channel_promise = Mojo::Promise->new;
+        my $channel         = Mojo::RabbitMQ::Client::Channel->new();
 
-                  # Start consuming messages from
-                  my $consumer = $channel->consume(
-                    queue => $queue_name,
-                    %{$self->defaults->{consumer}}
-                  );
-                  $consumer->on(
-                    message => sub {
-                      my ($client, $message) = @_;
+        $channel->catch(sub { $channel_promise->reject(@_) });
+        $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
 
-                      $self->emit('message', $message);
-                    }
-                  );
-                  $consumer->on('success' => sub { $self->emit('success') });
-                  $consumer->deliver;
-                }
-              );
-              $bind->on(error => sub { die "Error in binding" });
-              $bind->deliver;
-            }
-          );
-          $queue->deliver;
+        $channel->on(
+          open => sub {
+            my ($channel) = @_;
+            warn "-- channel opened\n" if DEBUG;
 
+            $self->channel($channel);
+            $channel->qos(%{$self->defaults->{qos}})->deliver;
+            $channel_promise->resolve();
+          }
+        );
+
+        $self->client->open_channel($channel);
+        return $channel_promise;
+      }
+    );
+  }
+
+  # Start consuming messages
+  $promise = $promise->then(
+    sub {
+      my $consumer_promise = Mojo::Promise->new;
+      my $consumer = $self->channel->consume(
+        queue => $self->client->url->query->param('queue'),
+        %{$self->defaults->{consumer}}
+      );
+      $consumer->on(
+        message => sub {
+          warn "-- message received\n" if DEBUG;
+          my ($client, $message) = @_;
+          $self->emit('message', $message);
         }
       );
-      $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
-
-      $client->open_channel($channel);
+      $consumer->on('success' => sub { $consumer_promise->resolve(@_) });
+      $consumer->deliver;
+      return $consumer_promise;
     }
   );
 
-  $client->on('close' => sub { shift; $self->emit('close', @_) });
-
-  # Start connection
-  $client->connect;
+  return $promise;
 }
 
 sub close {
@@ -125,8 +139,9 @@ Mojo::RabbitMQ::Client::Consumer - simple Mojo::RabbitMQ::Client based consumer
       $consumer->channel->ack($message)->deliver;
     }
   );
+  $consumer->start_p->wait;
 
-Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head1 DESCRIPTION
 
