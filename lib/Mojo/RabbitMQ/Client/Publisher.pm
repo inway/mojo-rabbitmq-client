@@ -1,8 +1,8 @@
 package Mojo::RabbitMQ::Client::Publisher;
 use Mojo::Base -base;
 use Mojo::Promise;
-use Mojo::RabbitMQ::Client;
 use Mojo::JSON qw(encode_json);
+require Mojo::RabbitMQ::Client;
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 

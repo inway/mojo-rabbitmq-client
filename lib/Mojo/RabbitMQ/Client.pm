@@ -16,9 +16,9 @@ use Net::AMQP;
 use Net::AMQP::Common qw(:all);
 
 use Mojo::RabbitMQ::Client::Channel;
-use Mojo::RabbitMQ::Client::Consumer;
 use Mojo::RabbitMQ::Client::LocalQueue;
-use Mojo::RabbitMQ::Client::Publisher;
+require Mojo::RabbitMQ::Client::Consumer;
+require Mojo::RabbitMQ::Client::Publisher;
 
 our $VERSION = "0.0.9";
 
