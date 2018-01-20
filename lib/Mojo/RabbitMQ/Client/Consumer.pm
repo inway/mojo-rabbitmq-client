@@ -1,6 +1,6 @@
 package Mojo::RabbitMQ::Client::Consumer;
 use Mojo::Base 'Mojo::EventEmitter';
-use Mojo::RabbitMQ::Client;
+require Mojo::RabbitMQ::Client;
 
 has url      => undef;
 has client   => undef;
