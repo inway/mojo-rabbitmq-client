@@ -87,7 +87,7 @@ SKIP: {
         my $message = shift;
 
         if ($message and $message->{header}->{content_type} eq $t->[2]) {
-          pass("received valid content_type");
+          pass("received valid content_type: " . $t->[2]);
         } else {
           fail("received something not valid");
         }
@@ -99,6 +99,7 @@ SKIP: {
   $channel->get_p(queue => $queue_name, no_ack => 1)->then(
     sub {
       my $channel = shift;
+      diag explain \@_;
       fail("received something extra") if defined $_[1];
     }
   )->wait;
@@ -115,11 +116,4 @@ foreach my $t (@tests) {
   } else {
     fail("received something not valid");
   }
-}
-
-    }
-  );
-  $consumer->on(
-    close => sub { pass('Consumer: Disconnected'); Mojo::IOLoop->stop });
-  $consumer->start();
 }

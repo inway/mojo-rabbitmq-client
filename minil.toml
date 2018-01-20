@@ -1,5 +1,6 @@
 name = "Mojo-RabbitMQ-Client"
 license = 'artistic_2'
 badges = ["travis","metacpan"]
+markdown_maker = "Pod::Markdown::Github"
 module_maker="ModuleBuildTiny"
 

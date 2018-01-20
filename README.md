@@ -5,99 +5,108 @@ Mojo::RabbitMQ::Client - Mojo::IOLoop based RabbitMQ client
 
 # SYNOPSIS
 
-    use Mojo::RabbitMQ::Client;
+```perl
+use Mojo::RabbitMQ::Client;
 
-    # Supply URL according to (https://www.rabbitmq.com/uri-spec.html)
-    my $client = Mojo::RabbitMQ::Client->new(
-      url => 'amqp://guest:guest@127.0.0.1:5672/');
+# Supply URL according to (https://www.rabbitmq.com/uri-spec.html)
+my $client = Mojo::RabbitMQ::Client->new(
+  url => 'amqp://guest:guest@127.0.0.1:5672/');
 
-    # Catch all client related errors
-    $client->catch(sub { warn "Some error caught in client"; });
+# Catch all client related errors
+$client->catch(sub { warn "Some error caught in client"; });
 
-    # When connection is in Open state, open new channel
-    $client->on(
+# When connection is in Open state, open new channel
+$client->on(
+  open => sub {
+    my ($client) = @_;
+
+    # Create a new channel with auto-assigned id
+    my $channel = Mojo::RabbitMQ::Client::Channel->new();
+
+    $channel->catch(sub { warn "Error on channel received"; });
+
+    $channel->on(
       open => sub {
-        my ($client) = @_;
+        my ($channel) = @_;
+        $channel->qos(prefetch_count => 1)->deliver;
 
-        # Create a new channel with auto-assigned id
-        my $channel = Mojo::RabbitMQ::Client::Channel->new();
-
-        $channel->catch(sub { warn "Error on channel received"; });
-
-        $channel->on(
-          open => sub {
-            my ($channel) = @_;
-            $channel->qos(prefetch_count => 1)->deliver;
-
-            # Publish some example message to test_queue
-            my $publish = $channel->publish(
-              exchange    => 'test',
-              routing_key => 'test_queue',
-              body        => 'Test message',
-              mandatory   => 0,
-              immediate   => 0,
-              header      => {}
-            );
-            # Deliver this message to server
-            $publish->deliver;
-
-            # Start consuming messages from test_queue
-            my $consumer = $channel->consume(queue => 'test_queue');
-            $consumer->on(message => sub { say "Got a message" });
-            $consumer->deliver;
-          }
+        # Publish some example message to test_queue
+        my $publish = $channel->publish(
+          exchange    => 'test',
+          routing_key => 'test_queue',
+          body        => 'Test message',
+          mandatory   => 0,
+          immediate   => 0,
+          header      => {}
         );
-        $channel->on(close => sub { $log->error('Channel closed') });
+        # Deliver this message to server
+        $publish->deliver;
 
-        $client->open_channel($channel);
+        # Start consuming messages from test_queue
+        my $consumer = $channel->consume(queue => 'test_queue');
+        $consumer->on(message => sub { say "Got a message" });
+        $consumer->deliver;
       }
     );
+    $channel->on(close => sub { $log->error('Channel closed') });
 
-    # Start connection
-    $client->connect();
+    $client->open_channel($channel);
+  }
+);
 
-    # Start Mojo::IOLoop if not running already
-    Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+# Start connection
+$client->connect();
+
+# Start Mojo::IOLoop if not running already
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+```
 
 ## CONSUMER
 
-    use Mojo::RabbitMQ::Client;
-    my $consumer = Mojo::RabbitMQ::Client->consumer(
-      url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
-      defaults => {
-        qos      => {prefetch_count => 1},
-        queue    => {durable        => 1},
-        consumer => {no_ack         => 0},
-      }
-    );
+```perl
+use Mojo::RabbitMQ::Client;
+my $consumer = Mojo::RabbitMQ::Client->consumer(
+  url      => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo',
+  defaults => {
+    qos      => {prefetch_count => 1},
+    queue    => {durable        => 1},
+    consumer => {no_ack         => 0},
+  }
+);
 
-    $consumer->catch(sub { die "Some error caught in Consumer" } );
-    $consumer->on('success' => sub { say "Consumer ready" });
-    $consumer->on(
-      'message' => sub {
-        my ($consumer, $message) = @_;
+$consumer->catch(sub { die "Some error caught in Consumer" } );
+$consumer->on('success' => sub { say "Consumer ready" });
+$consumer->on(
+  'message' => sub {
+    my ($consumer, $message) = @_;
 
-        $consumer->channel->ack($message)->deliver;
-      }
-    );
-    $consumer->start();
+    $consumer->channel->ack($message)->deliver;
+  }
+);
+$consumer->start();
 
-    Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+```
 
 ## PUBLISHER
 
-    use Mojo::RabbitMQ::Client;
-    my $publisher = Mojo::RabbitMQ::Client->publisher(
-      url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&queue=mojo'
-    );
+```perl
+use Mojo::RabbitMQ::Client;
+my $publisher = Mojo::RabbitMQ::Client->publisher(
+  url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
+);
 
-    $publisher->catch(sub { die "Some error caught in Publisher" } );
-    $publisher->on('success' => sub { say "Publisher ready" });
+$publisher->publish('plain text');
 
-    $publisher->publish('plain text');
-    $publisher->publish({encode => { to => 'json'}});
-
-    Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+$publisher->publish(
+  {encode => { to => 'json'}},
+  routing_key => 'mojo_mq'
+)->then(sub {
+  say "Message published";
+})->catch(sub {
+  die "Publishing failed"
+})->wait;
+```
 
 # DESCRIPTION
 
@@ -110,37 +119,45 @@ following new ones.
 
 ## connect
 
-    $client->on(connect => sub {
-      my ($client, $stream) = @_;
-      ...
-    });
+```perl
+$client->on(connect => sub {
+  my ($client, $stream) = @_;
+  ...
+});
+```
 
 Emitted when TCP/IP connection with RabbitMQ server is established.
 
 ## open
 
-    $client->on(open => sub {
-      my ($client) = @_;
-      ...
-    });
+```perl
+$client->on(open => sub {
+  my ($client) = @_;
+  ...
+});
+```
 
 Emitted AMQP protocol Connection.Open-Ok method is received.
 
 ## close
 
-    $client->on(close => sub {
-      my ($client) = @_;
-      ...
-    });
+```perl
+$client->on(close => sub {
+  my ($client) = @_;
+  ...
+});
+```
 
 Emitted on reception of Connection.Close-Ok method.
 
 ## disconnect
 
-    $client->on(close => sub {
-      my ($client) = @_;
-      ...
-    });
+```perl
+$client->on(close => sub {
+  my ($client) = @_;
+  ...
+});
+```
 
 Emitted when TCP/IP connection gets disconnected.
 
@@ -150,58 +167,74 @@ Emitted when TCP/IP connection gets disconnected.
 
 ## tls
 
-    my $tls = $client->tls;
-    $client = $client->tls(1)
+```perl
+my $tls = $client->tls;
+$client = $client->tls(1)
+```
 
 Force secure connection. Default is disabled (`0`).
 
 ## user
 
-    my $user = $client->user;
-    $client  = $client->user('guest')
+```perl
+my $user = $client->user;
+$client  = $client->user('guest')
+```
 
 Sets username for authorization, by default it's not defined.
 
 ## pass
 
-    my $pass = $client->pass;
-    $client  = $client->pass('secret')
+```perl
+my $pass = $client->pass;
+$client  = $client->pass('secret')
+```
 
 Sets user password for authorization, by default it's not defined.
 
 ## pass
 
-    my $pass = $client->pass;
-    $client  = $client->pass('secret')
+```perl
+my $pass = $client->pass;
+$client  = $client->pass('secret')
+```
 
 Sets user password for authorization, by default it's not defined.
 
 ## host
 
-    my $host = $client->host;
-    $client  = $client->host('localhost')
+```perl
+my $host = $client->host;
+$client  = $client->host('localhost')
+```
 
 Hostname or IP address of RabbitMQ server. Defaults to `localhost`.
 
 ## port
 
-    my $port = $client->port;
-    $client  = $client->port(1234)
+```perl
+my $port = $client->port;
+$client  = $client->port(1234)
+```
 
 Port on which RabbitMQ server listens for new connections.
 Defaults to `5672`, which is standard RabbitMQ server listen port.
 
 ## vhost
 
-    my $vhost = $client->vhost;
-    $client  = $client->vhost('/')
+```perl
+my $vhost = $client->vhost;
+$client  = $client->vhost('/')
+```
 
 RabbitMQ virtual server to user. Default is `/`.
 
 ## params
 
-    my $params = $client->params;
-    $client  = $client->params(Mojo::Parameters->new('verify=1'))
+```perl
+my $params = $client->params;
+$client  = $client->params(Mojo::Parameters->new('verify=1'))
+```
 
 Sets additional parameters for connection. Default is not defined.
 
@@ -209,36 +242,44 @@ For list of supported parameters see ["SUPPORTED QUERY PARAMETERS"](#supported-q
 
 ## url
 
-    my $url = $client->url;
-    $client = $client->url('amqp://...');
+```perl
+my $url = $client->url;
+$client = $client->url('amqp://...');
+```
 
 Sets all connection parameters in one string, according to specification from
 [https://www.rabbitmq.com/uri-spec.html](https://www.rabbitmq.com/uri-spec.html).
 
-    amqp_URI       = "amqp[s]://" amqp_authority [ "/" vhost ] [ "?" query ]
+```perl
+amqp_URI       = "amqp[s]://" amqp_authority [ "/" vhost ] [ "?" query ]
 
-    amqp_authority = [ amqp_userinfo "@" ] host [ ":" port ]
+amqp_authority = [ amqp_userinfo "@" ] host [ ":" port ]
 
-    amqp_userinfo  = username [ ":" password ]
+amqp_userinfo  = username [ ":" password ]
 
-    username       = *( unreserved / pct-encoded / sub-delims )
+username       = *( unreserved / pct-encoded / sub-delims )
 
-    password       = *( unreserved / pct-encoded / sub-delims )
+password       = *( unreserved / pct-encoded / sub-delims )
 
-    vhost          = segment
+vhost          = segment
+```
 
 ## heartbeat\_timeout
 
-    my $timeout = $client->heartbeat_timeout;
-    $client     = $client->heartbeat_timeout(180);
+```perl
+my $timeout = $client->heartbeat_timeout;
+$client     = $client->heartbeat_timeout(180);
+```
 
 Heartbeats are use to monitor peer reachability in AMQP.
 Default value is `60` seconds, if set to `0` no heartbeats will be sent.
 
 ## connect\_timeout
 
-    my $timeout = $client->connect_timeout;
-    $client     = $client->connect_timeout(5);
+```perl
+my $timeout = $client->connect_timeout;
+$client     = $client->connect_timeout(5);
+```
 
 Connection timeout used by [Mojo::IOLoop::Client](https://metacpan.org/pod/Mojo::IOLoop::Client).
 Defaults to environment variable `MOJO_CONNECT_TIMEOUT` or `10` seconds
@@ -246,8 +287,10 @@ if nothing else is set.
 
 ## max\_channels
 
-    my $max_channels = $client->max_channels;
-    $client          = $client->max_channels(10);
+```perl
+my $max_channels = $client->max_channels;
+$client          = $client->max_channels(10);
+```
 
 Maximum number of channels allowed to be active. Defaults to `0` which
 means no implicit limit.
@@ -259,13 +302,17 @@ emitted on channel saying that: _Maximum number of channels reached_.
 
 ## consumer
 
-    my $client = Mojo::RabbitMQ::Client->consumer(...)
+```perl
+my $client = Mojo::RabbitMQ::Client->consumer(...)
+```
 
 Shortcut for creating [Mojo::RabbitMQ::Client::Consumer](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Consumer).
 
 ## publisher
 
-    my $client = Mojo::RabbitMQ::Client->publisher(...)
+```perl
+my $client = Mojo::RabbitMQ::Client->publisher(...)
+```
 
 Shortcut for creating [Mojo::RabbitMQ::Client::Publisher](https://metacpan.org/pod/Mojo::RabbitMQ::Client::Publisher).
 
@@ -276,35 +323,47 @@ the following new ones.
 
 ## connect
 
-    $client->connect();
+```
+$client->connect();
+```
 
 Tries to connect to RabbitMQ server and negotiate AMQP protocol.
 
 ## close
 
-    $client->close();
+```
+$client->close();
+```
 
 ## param
 
-    my $param = $client->param('name');
-    $client   = $client->param(name => 'value');
+```perl
+my $param = $client->param('name');
+$client   = $client->param(name => 'value');
+```
 
 ## add\_channel
 
-    my $channel = Mojo::RabbitMQ::Client::Channel->new();
-    ...
-    $channel    = $client->add_channel($channel);
-    $channel->open;
+```perl
+my $channel = Mojo::RabbitMQ::Client::Channel->new();
+...
+$channel    = $client->add_channel($channel);
+$channel->open;
+```
 
 ## open\_channel
 
-    my $channel = Mojo::RabbitMQ::Client::Channel->new();
-    ...
-    $client->open_channel($channel);
+```perl
+my $channel = Mojo::RabbitMQ::Client::Channel->new();
+...
+$client->open_channel($channel);
+```
 
 ## delete\_channel
 
-    my $removed = $client->delete_channel($channel->id);
+```perl
+my $removed = $client->delete_channel($channel->id);
+```
 
 # SUPPORTED QUERY PARAMETERS
 
