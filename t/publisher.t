@@ -89,7 +89,7 @@ SKIP: {
         if ($message and $message->{header}->{content_type} eq $t->[2]) {
           pass("received valid content_type: " . $t->[2]);
         } else {
-          fail("received something not valid");
+          fail("received something not valid, expecting " . $t->[2] . " got " . ($message->{header}->{content_type} // '(undef)'));
         }
       }
     )->wait;
