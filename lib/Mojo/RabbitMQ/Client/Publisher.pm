@@ -12,12 +12,6 @@ has channel  => undef;
 has setup    => 0;
 has defaults => sub { {} };
 
-sub publish {
-  my $self    = shift;
-
-  $self->publish_p(@_)->wait;
-}
-
 sub publish_p {
   my $self    = shift;
   my $body    = shift;
@@ -134,8 +128,6 @@ Mojo::RabbitMQ::Client::Publisher - simple Mojo::RabbitMQ::Client based publishe
     url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
   );
 
-  $publisher->publish('plain text');
-
   $publisher->publish_p(
     {encode => { to => 'json'}},
     routing_key => 'mojo_mq'
@@ -164,17 +156,17 @@ For detailed description please see L<Mojo::RabbitMQ::Client#url>.
 
 L<Mojo::RabbitMQ::Client::Publisher> implements only single method.
 
-=head2 publish
+=head2 publish_p
 
-  $publisher->publish('simple plain text body');
+  $publisher->publish_p('simple plain text body');
 
-  $publisher->publish({ some => 'json' });
+  $publisher->publish_p({ some => 'json' });
 
-  $publisher->publish($body, { header => 'content' }, routing_key => 'mojo', mandatory => 1);
+  $publisher->publish_p($body, { header => 'content' }, routing_key => 'mojo', mandatory => 1);
 
 Method signature
 
-  publish($body!, \%headers?, *@params)
+  publish_p($body!, \%headers?, *@params)
 
 =over 2
 
