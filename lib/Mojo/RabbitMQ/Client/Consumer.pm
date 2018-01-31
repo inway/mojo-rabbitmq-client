@@ -12,12 +12,7 @@ has queue    => undef;
 has setup    => 0;
 has defaults => sub { {} };
 
-sub start {
-  my $self = shift;
-  $self->start_p(@_)->wait;
-}
-
-sub start_p {
+sub consume_p {
   my $self = shift;
 
   my $promise = Mojo::Promise->new()->resolve();
@@ -139,7 +134,7 @@ Mojo::RabbitMQ::Client::Consumer - simple Mojo::RabbitMQ::Client based consumer
       $consumer->channel->ack($message)->deliver;
     }
   );
-  $consumer->start_p->wait;
+  $consumer->consume_p->wait;
 
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
