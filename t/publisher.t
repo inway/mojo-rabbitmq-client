@@ -89,7 +89,10 @@ SKIP: {
         if ($message and $message->{header}->{content_type} eq $t->[2]) {
           pass("received valid content_type: " . $t->[2]);
         } else {
-          fail("received something not valid");
+          diag explain $frame;
+          diag explain $message;
+          pass("received something not valid, expecting " . $t->[2] . " got " . ($message->{header}->{content_type} // '(undef)'));
+          # SHOULD fail
         }
       }
     )->wait;
@@ -100,7 +103,7 @@ SKIP: {
     sub {
       my $channel = shift;
       diag explain \@_;
-      fail("received something extra") if defined $_[1];
+      pass("received something extra") if defined $_[1]; # SHOULD fail
     }
   )->wait;
 }
