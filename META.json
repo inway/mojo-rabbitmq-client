@@ -4,13 +4,13 @@
       "-2017, Sebastian Podjasek and others"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.6, CPAN::Meta::Converter version 2.150005",
+   "generated_by" : "Minilla/v3.0.14, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "artistic_2"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "Mojo-RabbitMQ-Client",
    "no_index" : {
@@ -44,7 +44,7 @@
          "requires" : {
             "File::ShareDir" : "0",
             "List::Util" : "1.33",
-            "Mojolicious" : "6.10",
+            "Mojolicious" : "7.53",
             "Net::AMQP" : "0.06",
             "perl" : "5.010"
          }
@@ -68,12 +68,14 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.0.9",
+   "version" : "0.1.0",
    "x_contributors" : [
-      "Vidar Tyldum <vidar@tyldum.com>",
-      "Stephan Kulow <coolo@suse.de>",
+      "Christopher Rasch-Olsen Raa <christopher@stix.no>",
+      "Patrick Goldmann <patrick.goldmann@googlemail.com>",
       "Richard Lippmann <lippmann@findus-internet-opac.de>",
-      "Sebastian Podjasek <sebastian@podjasek.pl>"
+      "Sebastian Podjasek <sebastian@podjasek.pl>",
+      "Stephan Kulow <coolo@suse.de>",
+      "Vidar Tyldum <vidar@tyldum.com>"
    ],
-   "x_serialization_backend" : "JSON::PP version 2.27300"
+   "x_serialization_backend" : "JSON::PP version 2.97000"
 }
