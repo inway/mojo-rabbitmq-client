@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.2.0 2018-07-25T13:23:26Z
+  - Remove internal frame buffer handling, use Net::AMQP #11 (@kraih)
 0.1.0 2018-02-16T10:15:32Z
   - Make Mojo::RabbitMQ::Client::Consumer use promises #23 (@christopherraa)
   - Fix circular includes by #20 (@christopherraa)

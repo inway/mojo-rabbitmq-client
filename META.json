@@ -68,12 +68,13 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.1.0",
+   "version" : "0.2.0",
    "x_contributors" : [
       "Christopher Rasch-Olsen Raa <christopher@stix.no>",
       "Patrick Goldmann <patrick.goldmann@googlemail.com>",
       "Richard Lippmann <lippmann@findus-internet-opac.de>",
       "Sebastian Podjasek <sebastian@podjasek.pl>",
+      "Sebastian Riedel <kraihx@gmail.com>",
       "Stephan Kulow <coolo@suse.de>",
       "Vidar Tyldum <vidar@tyldum.com>"
    ],
