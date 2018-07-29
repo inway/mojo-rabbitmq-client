@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+0.2.1 2018-07-29T14:17:43Z
+  - Fixed POD syntax, spelling & grammar errors #27,#28 (@gregoa)
+  - Fixed POD error #26 (@manwar)
 0.2.0 2018-07-25T13:23:26Z
   - Remove internal frame buffer handling, use Net::AMQP #11 (@kraih)
 0.1.0 2018-02-16T10:15:32Z

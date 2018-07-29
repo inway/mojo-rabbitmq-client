@@ -1,6 +1,7 @@
 use Mojolicious::Lite;
 use Mojo::EventEmitter;
 use Mojo::RabbitMQ::Client;
+use Mojo::RabbitMQ::Client::Channel;
 
 helper events => sub { state $events = Mojo::EventEmitter->new };
 
@@ -22,13 +23,15 @@ websocket '/channel' => sub {
 
 my $amqp
   = Mojo::RabbitMQ::Client->new(
-  url => ($ENV{MOJO_RABBITMQ_URL} || 'rabbitmq://guest:guest@127.0.0.1:5672/')
+  url => ($ENV{MOJO_RABBITMQ_URL} || 'amqp://guest:guest@127.0.0.1:5672/')
   );
 $amqp->on(
   open => sub {
-    my ($self) = @_;
+    my ($client) = @_;
+    warn "client connected";
 
-    my $channel = Mojo::RabbitMQ::Channel->new();
+    my $channel = Mojo::RabbitMQ::Client::Channel->new();
+    $channel->catch(sub { warn 'Error on channel received'; });
     $channel->on(
       open => sub {
 
@@ -78,7 +81,8 @@ $amqp->on(
         $queue->deliver();
       }
     );
-    $self->open_channel($channel);
+    $channel->on(close => sub { warn 'Channel closed'; });
+    $client->open_channel($channel);
   }
 );
 $amqp->connect();

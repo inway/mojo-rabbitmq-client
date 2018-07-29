@@ -68,15 +68,17 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.2.0",
+   "version" : "0.2.1",
    "x_contributors" : [
       "Christopher Rasch-Olsen Raa <christopher@stix.no>",
+      "Mohammad S Anwar <Mohammad.Anwar@yahoo.com>",
       "Patrick Goldmann <patrick.goldmann@googlemail.com>",
       "Richard Lippmann <lippmann@findus-internet-opac.de>",
       "Sebastian Podjasek <sebastian@podjasek.pl>",
       "Sebastian Riedel <kraihx@gmail.com>",
       "Stephan Kulow <coolo@suse.de>",
-      "Vidar Tyldum <vidar@tyldum.com>"
+      "Vidar Tyldum <vidar@tyldum.com>",
+      "gregor herrmann <gregor+github@comodo.priv.at>"
    ],
    "x_serialization_backend" : "JSON::PP version 2.97000"
 }
