@@ -199,6 +199,8 @@ But beware - headers get merged, but params override values so when you write th
 
 message will lack C<content_type> header!
 
+=back
+
 =head1 SEE ALSO
 
 L<Mojo::RabbitMQ::Client>
