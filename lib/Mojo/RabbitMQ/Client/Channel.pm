@@ -656,7 +656,7 @@ Mojo::RabbitMQ::Client::Channel - handles all channel related methods
 
   my $channel = Mojo::RabbitMQ::Client::Channel->new();
 
-  $channel->catch(sub { warn "Some channel error occured: " . $_[1] });
+  $channel->catch(sub { warn "Some channel error occurred: " . $_[1] });
 
   $channel->on(
     open => sub {
@@ -670,7 +670,7 @@ Mojo::RabbitMQ::Client::Channel - handles all channel related methods
 
 =head1 DESCRIPTION
 
-L<Mojo::RabbitMQ::Client::Channel> allows to call all channel related methods.
+L<Mojo::RabbitMQ::Client::Channel> allows one to call all channel related methods.
 
 =head1 EVENTS
 
