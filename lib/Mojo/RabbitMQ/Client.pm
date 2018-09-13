@@ -753,13 +753,6 @@ Sets username for authorization, by default it's not defined.
 
 Sets user password for authorization, by default it's not defined.
 
-=head2 pass
-
-  my $pass = $client->pass;
-  $client  = $client->pass('secret')
-
-Sets user password for authorization, by default it's not defined.
-
 =head2 host
 
   my $host = $client->host;

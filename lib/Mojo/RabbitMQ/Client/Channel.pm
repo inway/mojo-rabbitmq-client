@@ -716,7 +716,7 @@ Emitted when channel receives Open-Ok.
     ...
   });
 
-Emitted when channel gets closed, C<<$frame>> contains close reason.
+Emitted when channel gets closed, C<$frame> contains close reason.
 
 =head1 ATTRIBUTES
 
