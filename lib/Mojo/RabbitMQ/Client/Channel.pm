@@ -1,10 +1,11 @@
 package Mojo::RabbitMQ::Client::Channel;
 use Mojo::Base 'Mojo::EventEmitter';
-use Mojo::Promise;
 
+use Mojo::Promise;
 use Mojo::RabbitMQ::Client::LocalQueue;
 use Mojo::RabbitMQ::Client::Method;
 use Mojo::RabbitMQ::Client::Method::Publish;
+use Scalar::Util qw(isweak weaken);
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
@@ -125,6 +126,7 @@ sub close {
 
   for my $consumer_tag (keys %{$self->consumer_cbs}) {
     my $method = $self->cancel(consumer_tag => $consumer_tag);
+    weaken $self unless isweak $self;
     $method->on(
       success => sub {
         $self->_close();
@@ -178,8 +180,14 @@ sub _assert_open {
 sub _prepare_method {
   my $self = shift;
 
-  return Mojo::RabbitMQ::Client::Method->new(client => $self->client, channel => $self)
-    ->setup(@_);
+  my $method = Mojo::RabbitMQ::Client::Method->new(
+    client => $self->client,
+    channel => $self
+  );
+  weaken $method->{channel};
+  weaken $method->{client};
+
+  return $method->setup(@_);
 }
 
 sub declare_exchange {
@@ -207,6 +215,7 @@ sub declare_exchange_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->declare_exchange(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -235,6 +244,7 @@ sub delete_exchange_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->delete_exchange(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -268,6 +278,7 @@ sub declare_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->declare_queue(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -321,6 +332,7 @@ sub unbind_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->unbind_queue(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -348,6 +360,7 @@ sub purge_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->purge_queue(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -377,6 +390,7 @@ sub delete_queue_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->delete_queue(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -400,7 +414,11 @@ sub publish_p {
   my $method = Mojo::RabbitMQ::Client::Method::Publish->new(
     client  => $self->client,
     channel => $self
-  )->setup(@_);
+  );
+  weaken $method->{client};
+  weaken $method->{channel};
+  $method->setup(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;
@@ -425,6 +443,7 @@ sub consume {
       warn "-- Basic::ConsumeOk\n" if DEBUG;
     }
   );
+  weaken $self;
   $method->on(
     success => sub {
       my $this  = shift;
@@ -451,6 +470,7 @@ sub cancel {
       warn "-- Basic::CancelOk\n" if DEBUG;
     }
   );
+  weaken $self;
   $method->on(
     success => sub {
       my $this  = shift;
@@ -473,6 +493,7 @@ sub get {
     },
     [qw(Basic::GetOk Basic::GetEmpty)]
   );
+  weaken $self;
   $method->on(
     success => sub {
       warn "-- Basic::GetOk|GetEmpty\n" if DEBUG;
@@ -501,6 +522,7 @@ sub get_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->get(@_);
+  weaken $self;
   $method->on('message' => sub { shift; $promise->resolve($self, @_) });
   $method->on('empty' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
@@ -539,6 +561,7 @@ sub ack_p {
 
   my $promise = Mojo::Promise->new;
   my $method = $self->ack(@_);
+  weaken $self;
   $method->on('success' => sub { shift; $promise->resolve($self, @_) });
   $method->on('error' => sub { shift; $promise->reject($self, @_) });
   $method->deliver;

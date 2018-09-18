@@ -1,7 +1,9 @@
 package Mojo::RabbitMQ::Client::Publisher;
 use Mojo::Base -base;
+
 use Mojo::Promise;
 use Mojo::JSON qw(encode_json);
+use Scalar::Util 'weaken';
 require Mojo::RabbitMQ::Client;
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
@@ -25,8 +27,9 @@ sub publish_p {
     %args = (@_);
   }
 
-  my $promise = Mojo::Promise->new()->resolve();
+  my $promise = Mojo::Promise->new()->resolve;
 
+  weaken $self;
   unless ($self->client) {
     $promise = $promise->then(
       sub {
@@ -37,13 +40,13 @@ sub publish_p {
         $self->client($client);
 
         # Catch all client related errors
-        $self->client->catch(sub { $client_promise->reject(@_) });
+        $self->client->catch(sub { $client_promise->reject($_[1]) });
 
         # When connection is in Open state, open new channel
         $self->client->on(
           open => sub {
             warn "-- client open\n" if DEBUG;
-            $client_promise->resolve(@_);
+            $client_promise->resolve;
           }
         );
 
@@ -64,7 +67,7 @@ sub publish_p {
 
         my $channel         = Mojo::RabbitMQ::Client::Channel->new();
 
-        $channel->catch(sub { $channel_promise->reject(@_) });
+        $channel->catch(sub { $channel_promise->reject($_[1]) });
 
         $channel->on(
           open => sub {
@@ -73,7 +76,7 @@ sub publish_p {
 
             warn "-- channel opened\n" if DEBUG;
 
-            $channel_promise->resolve();
+            $channel_promise->resolve;
           }
         );
         $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
