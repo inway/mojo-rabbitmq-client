@@ -1,5 +1,6 @@
 package Mojo::RabbitMQ::Client;
 use Mojo::Base 'Mojo::EventEmitter';
+
 use Carp qw(croak confess);
 use Mojo::URL;
 use Mojo::Home;
@@ -8,7 +9,7 @@ use Mojo::Parameters;
 use Mojo::Promise;
 use Mojo::Util qw(url_unescape dumper);
 use List::Util qw(none);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use File::Basename 'dirname';
 use File::ShareDir qw(dist_file);
 
@@ -125,6 +126,7 @@ sub add_channel {
   }
 
   $self->channels->{$id} = $channel->id($id)->client($self);
+  weaken $channel->{client};
 
   return $channel;
 }
@@ -135,9 +137,9 @@ sub acquire_channel_p {
   my $promise = Mojo::Promise->new;
 
   my $channel = Mojo::RabbitMQ::Client::Channel->new();
-  $channel->catch(sub { $promise->reject(@_) });
+  $channel->catch(sub { $promise->reject(@_); undef $promise });
   $channel->on(close => sub { warn "Channel closed" });
-  $channel->on(open => sub { $promise->resolve(@_) });
+  $channel->on(open => sub { $promise->resolve(@_); undef $promise });
 
   $self->open_channel($channel);
 

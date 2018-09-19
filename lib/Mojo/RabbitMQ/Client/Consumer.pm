@@ -1,6 +1,8 @@
 package Mojo::RabbitMQ::Client::Consumer;
 use Mojo::Base 'Mojo::EventEmitter';
+
 use Mojo::Promise;
+use Scalar::Util 'weaken';
 require Mojo::RabbitMQ::Client;
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
@@ -17,6 +19,7 @@ sub consume_p {
 
   my $promise = Mojo::Promise->new()->resolve();
 
+  weaken $self;
   unless ($self->client) {
     $promise = $promise->then(
       sub {
@@ -26,13 +29,13 @@ sub consume_p {
         $self->client($client);
 
         # Catch all client related errors
-        $self->client->catch(sub { $client_promise->reject(@_) });
+        $self->client->catch(sub { $client_promise->reject($_[1]) });
 
         # When connection is in Open state, open new channel
         $client->on(
           open => sub {
             warn "-- client open\n" if DEBUG;
-            $client_promise->resolve(@_);
+            $client_promise->resolve;
           }
         );
         $client->on('close' => sub { shift; $self->emit('close', @_) });
@@ -53,7 +56,7 @@ sub consume_p {
         my $channel_promise = Mojo::Promise->new;
         my $channel         = Mojo::RabbitMQ::Client::Channel->new();
 
-        $channel->catch(sub { $channel_promise->reject(@_) });
+        $channel->catch(sub { $channel_promise->reject($_[1]) });
         $channel->on(close => sub { warn 'Channel closed: ' . $_[1]->method_frame->reply_text; });
 
         $channel->on(
@@ -63,7 +66,7 @@ sub consume_p {
 
             $self->channel($channel);
             $channel->qos(%{$self->defaults->{qos}})->deliver;
-            $channel_promise->resolve();
+            $channel_promise->resolve;
           }
         );
 
