@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+0.2.2 2019-05-23T11:20:22Z
+  - Minor documentation fixes #32 (@sjn)
+  - fix around 30 memory leaks #31 (@kraih)
 0.2.1 2018-07-29T14:17:43Z
   - Fixed POD syntax, spelling & grammar errors #27,#28 (@gregoa)
   - Fixed POD error #26 (@manwar)

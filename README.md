@@ -192,15 +192,6 @@ $client  = $client->pass('secret')
 
 Sets user password for authorization, by default it's not defined.
 
-## pass
-
-```perl
-my $pass = $client->pass;
-$client  = $client->pass('secret')
-```
-
-Sets user password for authorization, by default it's not defined.
-
 ## host
 
 ```perl
