@@ -185,22 +185,22 @@ If second argument is a HASHREF it will be merged to message headers.
 
 =item params
 
-Any other arguments will be considered key/value pairs and passed to publish method as
-arguments overriding everything besides body argument.
+Any other arguments will be considered key/value pairs and passed to the Client's publish
+method as arguments overriding everything besides body argument.
 
 So this:
 
-  $publisher->publish($body, { header => 'content' });
+  $publisher->publish({ json => 'object' }, { header => 'content' });
 
-can be also written like this:
-
-  $publisher->publish($body, header => { header => 'content' });
-
-But beware - headers get merged, but params override values so when you write this:
+is similar to this:
 
   $publisher->publish({ json => 'object' }, header => { header => 'content' });
 
-message will lack C<content_type> header!
+But beware - headers passed as a HASHREF get merged into the header constructed by the Publisher,
+but params override values; so if you pass C<header> as a param like this, it will override the
+header constructed by the Publisher, and the message will lack the C<content_type> header, even
+though you passed a reference as the body argument! With the first example, the C<content_type>
+header would be included.
 
 =back
 
