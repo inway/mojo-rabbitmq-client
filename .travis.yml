@@ -1,6 +1,6 @@
 language: perl
-sudo: required
 perl:
+  - "5.28"
   - "5.26"
   - "5.24"
   - "5.22"
@@ -13,5 +13,9 @@ services:
   - rabbitmq
 env:
   - "HARNESS_OPTIONS=j9 HARNESS_VERBOSE=1 TEST_POD=1"
-before_install:
-  - sudo cpanm --quiet --notest --skip-satisfied Module::Build::Tiny
+install:
+  - cpanm --quiet --notest --skip-satisfied Module::Build::Tiny
+  - cpanm -n --installdeps .
+sudo: false
+notifications:
+  email: false
