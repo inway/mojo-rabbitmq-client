@@ -13,3 +13,5 @@ services:
   - rabbitmq
 env:
   - "HARNESS_OPTIONS=j9 HARNESS_VERBOSE=1 TEST_POD=1"
+before_install:
+  - cpanm --quiet --notest --skip-satisfied Module::Build::Tiny
