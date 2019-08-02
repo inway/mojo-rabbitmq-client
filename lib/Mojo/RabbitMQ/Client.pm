@@ -385,9 +385,21 @@ sub _connected {
     'Connection::Start' => sub {
       my $frame = shift;
 
-      my @mechanisms = split /\s/, $frame->method_frame->mechanisms;
-      return $self->emit(error => 'AMQPLAIN is not found in mechanisms')
-        if none { $_ eq 'AMQPLAIN' } @mechanisms;
+      my @server_mechanisms = split /\s/, $frame->method_frame->mechanisms;
+      my $param_mechanism = $self->param('auth_mechanism') // '';
+      my @client_mechanisms = ('AMQPLAIN', 'EXTERNAL');
+      @client_mechanisms = ($param_mechanism) if ($param_mechanism);
+      warn "-- Server mechanisms: @server_mechanisms\n" if DEBUG;
+      warn "-- Client mechanisms: @client_mechanisms\n" if DEBUG;
+      my $mechanism;
+      for my $cand (@client_mechanisms) {
+        if (grep { $_ eq $cand } @server_mechanisms) {
+          $mechanism = $cand;
+          last;
+        }
+      }
+      return $self->emit(error => 'No authentication mechanism could be negotiated')
+        unless $mechanism;
 
       my @locales = split /\s/, $frame->method_frame->locales;
       return $self->emit(error => 'en_US is not found in locales')
@@ -404,7 +416,7 @@ sub _connected {
             information => 'https://github.com/inway/mojo-rabbitmq-client',
             version     => __PACKAGE__->VERSION,
           },
-          mechanism => 'AMQPLAIN',
+          mechanism => $mechanism,
           response  => {LOGIN => $self->user, PASSWORD => $self->pass},
           locale    => 'en_US',
         ),
@@ -913,7 +925,9 @@ authority file has been provided, or 0x00 otherwise.
 
 =head2 auth_mechanism
 
-Currently only AMQPLAIN is supported, B<so this parameter is ignored>.
+Sets the AMQP authentication mechanism. Defaults to AMQPLAIN. AMQPLAIN and
+EXTERNAL are supported; EXTERNAL will only work if L<Mojo::RabbitMQ::Client> does not need
+to do anything beyond passing along a username and password if specified.
 
 =head2 heartbeat
 
