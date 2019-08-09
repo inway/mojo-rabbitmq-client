@@ -351,9 +351,9 @@ sub _connect {
 
       # Connection established
       $stream->on(timeout => sub { $self->_error($id, 'Inactivity timeout') });
-      $stream->on(close => sub { $self->_handle($id, 1) });
+      $stream->on(close => sub { $self && $self->_handle($id, 1) });
       $stream->on(error => sub { $self && $self->_error($id, pop) });
-      $stream->on(read => sub { $self->_read($id, pop) });
+      $stream->on(read => sub { $self && $self->_read($id, pop) });
       $cb->();
     }
   );
