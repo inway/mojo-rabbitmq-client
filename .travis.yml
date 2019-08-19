@@ -1,14 +1,5 @@
+os: linux
 language: perl
-perl:
-  - "5.28"
-  - "5.26"
-  - "5.24"
-  - "5.22"
-  - "5.20"
-  - "5.18"
-  - "5.16"
-  - "5.14"
-  - "5.12"
 services:
   - rabbitmq
 env:
@@ -19,3 +10,22 @@ install:
 sudo: false
 notifications:
   email: false
+matrix:
+  include:
+    - dist: trusty
+      perl:
+        - "5.28"
+        - "5.26"
+        - "5.24"
+        - "5.22"
+        - "5.20"
+        - "5.18"
+        - "5.16"
+        - "5.14"
+        - "5.12"
+    - dist: xenial
+      perl:
+        - "5.28"
+        - "5.26"
+        - "5.24"
+        - "5.22"
