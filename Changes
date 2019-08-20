@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.2.4 2019-08-20T00:49:27Z
+  - Prevent warning about undefined object on closed channels #36 (@okurz)
 0.2.3 2019-07-24T21:06:16Z
   - Clarified documentation #33, #34 (@AdamWill)
 0.2.2 2019-05-23T11:20:22Z
