@@ -1,7 +1,7 @@
 {
    "abstract" : "Mojo::IOLoop based RabbitMQ client",
    "author" : [
-      "-2017, Sebastian Podjasek and others"
+      "-2019, Sebastian Podjasek and others"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Minilla/v3.0.14, CPAN::Meta::Converter version 2.150010",
@@ -68,7 +68,7 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.3.0",
+   "version" : "0.3.1",
    "x_contributors" : [
       "Adam Williamson <adamw@happyassassin.net>",
       "Adam Williamson <awilliam@redhat.com>",

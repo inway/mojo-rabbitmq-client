@@ -21,7 +21,7 @@ use Mojo::RabbitMQ::Client::LocalQueue;
 require Mojo::RabbitMQ::Client::Consumer;
 require Mojo::RabbitMQ::Client::Publisher;
 
-our $VERSION = "0.3.0";
+our $VERSION = "0.3.1";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 
@@ -947,10 +947,12 @@ L<Mojo::RabbitMQ::Client::Channel>, L<Mojo::RabbitMQ::Client::Consumer>, L<Mojo:
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2015-2017, Sebastian Podjasek and others
+Copyright (C) 2015-2019, Sebastian Podjasek and others
 
 Based on L<AnyEvent::RabbitMQ> - Copyright (C) 2010 Masahito Ikuta, maintained by C<< bobtfish@bobtfish.net >>
 
 This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
+
+Contains AMQP specification (F<shared/amqp0-9-1.stripped.extended.xml>) licensed under BSD-style license.
 
 =cut

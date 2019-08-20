@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.3.1 2019-08-20T20:45:53Z
+  - Re-apply licensing note from #37 - now in proper place
 0.3.0 2019-08-20T20:35:39Z
   - Allow EXTERNAL as well as AMQPLAIN auth #35 (@AdamWill)
   - fixes legal issues with AMQP specs licensing #37
