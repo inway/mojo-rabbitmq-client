@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Allow EXTERNAL as well as AMQPLAIN auth #35 (@AdamWill)
   - fixes legal issues with AMQP specs licensing #37
 0.2.4 2019-08-20T00:49:27Z
   - Prevent warning about undefined object on closed channels #36 (@okurz)
