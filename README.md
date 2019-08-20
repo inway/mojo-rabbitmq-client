@@ -386,7 +386,9 @@ authority file has been provided, or 0x00 otherwise.
 
 ## auth\_mechanism
 
-Currently only AMQPLAIN is supported, **so this parameter is ignored**.
+Sets the AMQP authentication mechanism. Defaults to AMQPLAIN. AMQPLAIN and
+EXTERNAL are supported; EXTERNAL will only work if [Mojo::RabbitMQ::Client](https://metacpan.org/pod/Mojo::RabbitMQ::Client) does not need
+to do anything beyond passing along a username and password if specified.
 
 ## heartbeat
 
@@ -406,10 +408,8 @@ Sets maximum number of channels - see [max\_channels](https://metacpan.org/pod/m
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2015-2019, Sebastian Podjasek and others
+Copyright (C) 2015-2017, Sebastian Podjasek and others
 
 Based on [AnyEvent::RabbitMQ](https://metacpan.org/pod/AnyEvent::RabbitMQ) - Copyright (C) 2010 Masahito Ikuta, maintained by `bobtfish@bobtfish.net`
 
 This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version 2.0.
-
-Contains AMQP specification (`shared/amqp0-9-1.stripped.extended.xml`) licensed under BSD-style license.

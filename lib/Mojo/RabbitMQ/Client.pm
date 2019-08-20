@@ -21,7 +21,7 @@ use Mojo::RabbitMQ::Client::LocalQueue;
 require Mojo::RabbitMQ::Client::Consumer;
 require Mojo::RabbitMQ::Client::Publisher;
 
-our $VERSION = "0.2.4";
+our $VERSION = "0.3.0";
 
 use constant DEBUG => $ENV{MOJO_RABBITMQ_DEBUG} // 0;
 

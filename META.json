@@ -68,9 +68,10 @@
          "web" : "https://github.com/inway/mojo-rabbitmq-client"
       }
    },
-   "version" : "0.2.4",
+   "version" : "0.3.0",
    "x_contributors" : [
       "Adam Williamson <adamw@happyassassin.net>",
+      "Adam Williamson <awilliam@redhat.com>",
       "Christopher Rasch-Olsen Raa <christopher@stix.no>",
       "Mohammad S Anwar <Mohammad.Anwar@yahoo.com>",
       "Oliver Kurz <okurz@suse.de>",

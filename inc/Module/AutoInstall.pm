@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.2.4';
+	$VERSION = '0.3.0';
 }
 
 # special map on pre-defined feature sets
