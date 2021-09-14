@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.16'
+          - '5.18'
+          - '5.20'
+          - '5.22'
+          - '5.30'
+          - '5.32'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log perl version
+        run: perl -V
+      - name: Install Module::Build::Tiny
+        run: cpanm --quiet --notest --skip-satisfied Module::Build::Tiny
+      - name: Install deps
+        run: cpanm -n --installdeps .
+      - name: Build
+        run: |
+          perl Build.PL 
+          ./Build 
+      - name: Run tests
+        run: ./Build test
+        env: 
+          TEST_POD: 1
+          HARNESS_VERBOSE: 1
+          HARNESS_OPTIONS: j9
