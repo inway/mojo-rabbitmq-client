@@ -153,7 +153,7 @@ Emitted on reception of Connection.Close-Ok method.
 ## disconnect
 
 ```perl
-$client->on(close => sub {
+$client->on(disconnect => sub {
   my ($client) = @_;
   ...
 });
