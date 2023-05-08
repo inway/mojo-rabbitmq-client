@@ -96,9 +96,7 @@ my $publisher = Mojo::RabbitMQ::Client->publisher(
   url => 'amqp://guest:guest@127.0.0.1:5672/?exchange=mojo&routing_key=mojo'
 );
 
-$publisher->publish('plain text');
-
-$publisher->publish(
+$publisher->publish_p(
   {encode => { to => 'json'}},
   routing_key => 'mojo_mq'
 )->then(sub {
